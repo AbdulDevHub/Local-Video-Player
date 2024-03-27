@@ -1,0 +1,25 @@
+{
+   "manifest_version": 3,
+   "name": "Local Video Player",
+   "short_name": "Video Player",
+   "description": "Player for local videos with adjustable speed, keyboard shortcuts, progress retrieval and more.",
+   "author": "Abdul Khan",
+   "version": "2",
+   "offline_enabled": true,
+   "background": {
+      "service_worker": "scripts/background.js"
+   },
+   "icons": {
+      "128": "icons/icon128.png",
+      "192": "icons/favicon.png",
+      "48": "icons/icon48.png"
+   },
+   "action": {},
+   "commands": {
+      "_execute_action": {
+         "suggested_key": {
+            "default": "Alt+V"
+         }
+      }
+   }
+}
