@@ -6,9 +6,7 @@ let preferences = {
 };
 
 
-// VIDEO SELECTION
-// ---------------
-
+// ----------------------------- VIDEO SELECTION -----------------------------
 // DRAG AND DROP
 const dragPanel = document.querySelector('#drag-panel');
 const dropOverlay = document.querySelector('#drop-overlay');
@@ -115,10 +113,7 @@ async function manageFileHandle(fileHandle) {
 	}
 }
 
-// CONTROL PLAYBACK
-// ----------------
-
-// NAVIGATION
+// ----------------------------- CONTROL PLAYBACK [BOTTOM NAVIGATION] -----------------------------
 const player = document.querySelector('.player');
 const playBtn = document.querySelector('.play-btn');
 const fullscreenBtn = document.querySelector('.fullscreen-btn');
@@ -205,9 +200,7 @@ speedControls.oninput = () => {
 	speedControls.value = parseFloat(speedControls.value).toFixed(2);
 };
 
-// TIME
-// ----
-
+// ----------------------------- TIME -----------------------------
 const progressBar = document.querySelector('#video-bar');
 const timeIndicator = document.querySelector('#time-indicator');
 const currentTime = document.querySelector('.current-time');
@@ -298,8 +291,7 @@ video.onended = () => {
 };
 
 
-// KEYBOARD SHORTCUTS
-// ------------------
+// ----------------------------- KEYBOARD SHORTCUTS -----------------------------
 let isFullScreenKey = false; // Variable to track if 'f' or 'g' was pressed
 let div = document.querySelector('.controls'); //Hide Playbar/Controls
 
@@ -553,9 +545,7 @@ function secondsToTime(seconds) {
 }
 
 
-// UTILITIES
-// ---------
-
+// ----------------------------- UTILITIES -----------------------------
 async function hashFile(file) {
 	// Get byte array of file
 	const arrayBuffer = await file.arrayBuffer();
@@ -605,7 +595,7 @@ function capture() {
 	return dataURL;
 }
 
-// PROGRESS BAR SEEKER GIANT
+// ----------------------------- PROGRESS BAR SEEKER GIANT -----------------------------
 let originalTime = undefined;
 let isActivated = false;
 
@@ -654,7 +644,7 @@ video.addEventListener('play', () => {
     }
 });
 
-// PROGRESS BAR SEEKER SMALL
+// ----------------------------- PROGRESS BAR SEEKER SMALL -----------------------------
 document.addEventListener('DOMContentLoaded', function () {
     const videoBar = document.getElementById('video-bar');
     const seekerPreview = document.getElementById('seeker-preview');
