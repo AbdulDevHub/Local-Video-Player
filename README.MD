@@ -1,5 +1,7 @@
 # Player for local videos
 
+## Overview
+
 This a video player for local videos whose main features are:
 
 * Light/dark theme (following system preferences)
@@ -9,6 +11,23 @@ This a video player for local videos whose main features are:
 * Works offline
 
 [^1]: The video state is saved in the browser's local storage. If you clear your browser's data, the state will be lost. Saved state will be deleted upon video completion or for videos last played more than 30 days ago.
+
+## Technologies Used
+
+- JavaScript
+- HTML
+- CSS
+
+## Setup
+
+To install and use this extension locally, follow these steps:
+
+1. Clone the repository
+2. Navigate to the project directory
+3. Open the Chrome browser and go to `chrome://extensions/`
+4. Enable Developer mode by ticking the checkbox in the upper-right corner.
+5. Click on the "Load unpacked" button.
+6. Select the directory containing your unpacked extension.
 
 ## Usage
 
@@ -37,3 +56,13 @@ The following keyboard shortcuts are supported:
 |                      <kbd>C</kbd>                      | Toggle video zoom     |
 |                      <kbd>P</kbd>                      | Toggle PiP            |
 |            <kbd>F</kbd><br><kbd>Enter</kbd>            | Toggle fullscreen     |
+
+## Contributing
+
+While this is a personal project, I'm open to collaboration. If you have suggestions for improvements, please open an issue.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+<br>
