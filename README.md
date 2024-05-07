@@ -74,6 +74,6 @@ While this is a personal project, I'm open to collaboration. If you have suggest
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 <br>
