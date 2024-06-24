@@ -14,12 +14,6 @@ This a video player for local videos whose main features are:
 
 [^1]: The video state is saved in the browser's local storage. If you clear your browser's data, the state will be lost. Saved state will be deleted upon video completion or for videos last played more than 30 days ago.
 
-## Technologies Used
-
-- JavaScript
-- HTML
-- CSS
-
 ## Setup
 
 To install and use this extension locally, follow these steps:
