@@ -1,5 +1,7 @@
 # Player for local videos
 
+<img height="400" src="https://github.com/AbdulDevHub/Local-Video-Player/blob/main/Extension%20Screenshot.png?raw=true">
+
 ## Overview
 
 This a video player for local videos whose main features are:
@@ -42,25 +44,29 @@ If another video is opened, its state will be saved and the dragged video will b
 
 The following keyboard shortcuts are supported:
 
-|                          Key                           | Action                |
-| :----------------------------------------------------: | --------------------- |
-|            <kbd>Space</kbd><br><kbd>K</kbd>            | Toggle play/pause     |
-|                      <kbd>S</kbd>                      | Slow down by 0.1x     |
-|                      <kbd>D</kbd>                      | Speed up by 0.1x      |
-| <kbd>Z</kbd><br><kbd>&larr;</kbd><br><kbd>&darr;</kbd> | Rewind 10 seconds     |
-| <kbd>X</kbd><br><kbd>&rarr;</kbd><br><kbd>&uarr;</kbd> | Forward 10 seconds    |
-|                      <kbd>R</kbd>                      | Reset default speed   |
-|                      <kbd>Not Set</kbd>                | Toggle time/remaining |
-|                      <kbd>A</kbd>                      | Set speed to 1x       |
-|                      <kbd>Q</kbd>                      | Set speed to 1.7x     |
-|                      <kbd>W</kbd>                      | Set speed to 2x       |
-|                      <kbd>E</kbd>                      | Set speed to 2.7x     |
-|                      <kbd>T</kbd>                      | Set speed to 4x       |
-|                      <kbd>R</kbd>                      | Traverse speeds       |
-|                      <kbd>M</kbd>                      | Toggle mute           |
-|                      <kbd>C</kbd>                      | Toggle video zoom     |
-|                      <kbd>P</kbd>                      | Toggle PiP            |
-|            <kbd>F</kbd><br><kbd>Enter</kbd>            | Toggle fullscreen     |
+|                          Key                           | Action                             |
+| :----------------------------------------------------: | ---------------------------------- |
+|            <kbd>Space</kbd><br><kbd>K</kbd>            | Toggle play/pause                  |
+|                      <kbd>D</kbd>                      | Slow down by 0.1x                  |
+|                      <kbd>S</kbd>                      | Speed up by 0.1x                   |
+| <kbd>Z</kbd><br><kbd>&larr;</kbd><br><kbd>&darr;</kbd> | Rewind 10 seconds                  |
+| <kbd>X</kbd><br><kbd>&rarr;</kbd><br><kbd>&uarr;</kbd> | Forward 10 seconds                 |
+|                      <kbd>R</kbd>                      | Reset default speed                |
+|                   <kbd>Not Set</kbd>                   | Toggle time/remaining              |
+|                      <kbd>M</kbd>                      | Toggle mute                        |
+|                      <kbd>C</kbd>                      | Toggle video zoom                  |
+|                      <kbd>P</kbd>                      | Toggle PiP                         |
+|            <kbd>F</kbd><br><kbd>Enter</kbd>            | Toggle fullscreen                  |
+|                      <kbd>G</kbd>                      | Toggle fullscreen or zoom          |
+|                      <kbd>Q</kbd>                      | Set speed to 1.7x or reset to 1x   |
+|                      <kbd>W</kbd>                      | Set speed to 2x or reset to 1x     |
+|                      <kbd>E</kbd>                      | Set speed to 2.7x or reset to 1x   |
+|                      <kbd>R</kbd>                      | Set speed to 3x or traverse speeds |
+|                      <kbd>T</kbd>                      | Set speed to 4x or reset to 1x     |
+|                      <kbd>H</kbd>                      | Hide playbar/controls              |
+|                      <kbd>U</kbd>                      | Toggle video stretching            |
+|                      <kbd>A</kbd>                      | Toggle Giant Video Seeker Mode     |
+|                      <kbd>a</kbd>                      | Toggle Small Video Seeker Mode     |
 
 ## Contributing
 
@@ -68,6 +74,6 @@ While this is a personal project, I'm open to collaboration. If you have suggest
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 <br>
