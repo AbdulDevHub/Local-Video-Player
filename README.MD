@@ -50,8 +50,13 @@ The following keyboard shortcuts are supported:
 | <kbd>Z</kbd><br><kbd>&larr;</kbd><br><kbd>&darr;</kbd> | Rewind 10 seconds     |
 | <kbd>X</kbd><br><kbd>&rarr;</kbd><br><kbd>&uarr;</kbd> | Forward 10 seconds    |
 |                      <kbd>R</kbd>                      | Reset default speed   |
-|                      <kbd>T</kbd>                      | Toggle time/remaining |
-|                      <kbd>A</kbd>                      | Set speed to 1.8x     |
+|                      <kbd>Not Set</kbd>                | Toggle time/remaining |
+|                      <kbd>A</kbd>                      | Set speed to 1x       |
+|                      <kbd>Q</kbd>                      | Set speed to 1.7x     |
+|                      <kbd>W</kbd>                      | Set speed to 2x       |
+|                      <kbd>E</kbd>                      | Set speed to 2.7x     |
+|                      <kbd>T</kbd>                      | Set speed to 4x       |
+|                      <kbd>R</kbd>                      | Traverse speeds       |
 |                      <kbd>M</kbd>                      | Toggle mute           |
 |                      <kbd>C</kbd>                      | Toggle video zoom     |
 |                      <kbd>P</kbd>                      | Toggle PiP            |
