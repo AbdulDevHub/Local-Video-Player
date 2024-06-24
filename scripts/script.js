@@ -355,27 +355,25 @@ document.addEventListener('keydown', (e) => {
 			break;
 		case 'w': // Preferred fast speed
 		case 'W':
-			if (video.playbackRate === 2) {
-				video.playbackRate = 1;
-			} else {video.playbackRate = 2;}
+			if (video.playbackRate === 2) video.playbackRate = 1;
+			else video.playbackRate = 2;
 			break;
 		case 'e': // Preferred fast speed
 		case 'E':
-			if (video.playbackRate === 2.7) {
-				video.playbackRate = 1;
-			} else {video.playbackRate = 2.7;}
-			break;
-		case 'r': // Preferred fast speed
-		case 'R':
-			if (video.playbackRate === 3) {
-				video.playbackRate = 1;
-			} else {video.playbackRate = 3;}
+			if (video.playbackRate === 2.7) video.playbackRate = 1;
+			else video.playbackRate = 2.7;
 			break;
 		case 't': // Preferred fast speed
 		case 'T':
-			if (video.playbackRate === 4) {
-				video.playbackRate = 1;
-			} else {video.playbackRate = 4;}
+			if (video.playbackRate === 4) video.playbackRate = 1;
+			else video.playbackRate = 4;
+			break;
+		case 'r': // Traverse Speeds
+		case 'R':
+			if (video.playbackRate === 1) video.playbackRate = 3;
+			else if (video.playbackRate === 3) video.playbackRate = 4;
+			else if (video.playbackRate === 4) video.playbackRate = 2;
+			else video.playbackRate = 1;
 			break;
 		case 'h':
 		case 'H': // //Hide Playbar/Controls
