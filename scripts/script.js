@@ -370,10 +370,8 @@ document.addEventListener('keydown', (e) => {
 			break;
 		case 'r': // Traverse Speeds
 		case 'R':
-			if (video.playbackRate === 1) video.playbackRate = 3;
-			else if (video.playbackRate === 3) video.playbackRate = 4;
-			else if (video.playbackRate === 4) video.playbackRate = 2;
-			else video.playbackRate = 1;
+			if (video.playbackRate === 3) video.playbackRate = 4;
+			else video.playbackRate = 3;
 			break;
 		case 'h':
 		case 'H': // //Hide Playbar/Controls
