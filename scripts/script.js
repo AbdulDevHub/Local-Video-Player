@@ -342,15 +342,15 @@ document.addEventListener("keydown", (e) => {
       togglePlay()
       break
     case "g":
-      isFullScreenKey = true // Set the variable to true when 'g' is pressed
+      isFullScreenKey = true // Set variable to true when 'g' pressed
       if (fullscreenState === 1 && div.classList.contains("hidden")) {
-        // If the video is in fullscreen state
+        // If video is in fullscreen state
         toggleStretchVideo() // Exit fullscreen and unstretch the video
         document.exitFullscreen()
         if (!div.classList.contains("hidden")) {
-          div.classList.add("hidden") // Hide the controls if they're not hidden
+          div.classList.add("hidden") // Hide controls if they're not hidden
         } else {
-          div.classList.remove("hidden") // Show the controls if they're hidden
+          div.classList.remove("hidden") // Show controls if they're hidden
         }
         fullscreenState = 0
       } else {
@@ -379,11 +379,8 @@ document.addEventListener("keydown", (e) => {
       break
     case "q": // Preferred fast speed
     case "Q":
-      if (video.playbackRate === 1.7) {
-        video.playbackRate = 1
-      } else {
-        video.playbackRate = 1.7
-      }
+      if (video.playbackRate === 1.7) video.playbackRate = 1
+      else video.playbackRate = 1.7
       break
     case "w": // Preferred fast speed
     case "W":
