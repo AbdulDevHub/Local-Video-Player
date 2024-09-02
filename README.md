@@ -1,6 +1,6 @@
 # Player for local videos
 
-<img height="400" src="https://github.com/AbdulDevHub/Local-Video-Player/blob/main/Extension%20Screenshot.png?raw=true">
+<img height="400" alt="Extension Screenshot" src="https://github.com/AbdulDevHub/Local-Video-Player/blob/main/Extension%20Screenshot.png?raw=true">
 
 ## Overview
 
