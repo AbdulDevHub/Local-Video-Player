@@ -463,6 +463,28 @@ document.addEventListener("keydown", (e) => {
   }
 })
 
+// ----------------------------- CTRL STRECH FEATURE -----------------------------
+let scaleX = 1
+let scaleY = 1
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey) {
+    if (e.key === "ArrowUp") scaleY += 0.01
+    else if (e.key === "ArrowDown") scaleY -= 0.01
+    else if (e.key === "ArrowRight") scaleX += 0.01
+    else if (e.key === "ArrowLeft") scaleX -= 0.01
+    else {
+      scaleX = 1
+      scaleY = 1
+    }
+    video.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})`
+  }
+})
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "u") video.style.transform = `scaleX(1) scaleY(1)`
+})
+
+// ----------------------------- BASIC VIDEO FEATURES -----------------------------
 function togglePlay() {
   video.paused ? video.play() : video.pause()
 }
