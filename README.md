@@ -59,8 +59,9 @@ The following keyboard shortcuts are supported:
 |                      <kbd>T</kbd>                      | Set speed to 4x or reset to 1x     |
 |                      <kbd>H</kbd>                      | Hide playbar/controls              |
 |                      <kbd>U</kbd>                      | Toggle video stretching            |
-|                      <kbd>A</kbd>                      | Toggle Giant Video Seeker Mode     |
-|                      <kbd>a</kbd>                      | Toggle Small Video Seeker Mode     |
+|                <kbd>CTRL + ↑→↓← </kbd>                 | Strech video ↑→↓← slightly         |
+|                      <kbd>A</kbd>                      | Toggle giant video seeker mode     |
+|                      <kbd>a</kbd>                      | Toggle small video seeker mode     |
 
 ## Contributing
 
