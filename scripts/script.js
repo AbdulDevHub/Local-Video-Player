@@ -182,11 +182,10 @@ video.addEventListener("dblclick", toggleFullScreen)
 zoomBtn.onclick = toggleZoom
 
 function toggleZoom() {
-  if (!controls.classList.contains("hidden")) {
-    controls.classList.add("hidden") // Hide the controls if they're not hidden
+  if (!div.classList.contains("hidden")) {
+    div.classList.add("hidden") // Hide the controls if they're not hidden
   } else {
-    controls.classList.remove("hidden") // Show the controls if they're hidden
-    previewBar.style.display = "none"
+    div.classList.remove("hidden") // Show the controls if they're hidden
   }
   if (fullscreenState === 1) {
     toggleStretchVideo() // Update the stretch mode based on the new visibility state of the video bar
@@ -226,7 +225,6 @@ speedControls.oninput = () => {
 
 // ----------------------------- TIME -----------------------------
 const progressBar = document.querySelector("#video-bar")
-const previewBar = document.querySelector("#preview-bar")
 const timeIndicator = document.querySelector("#time-indicator")
 const currentTime = document.querySelector(".current-time")
 const timeRemaining = document.querySelector(".time-remaining")
@@ -272,7 +270,6 @@ function updateProgressBarValue() {
 
 function updateIndicators() {
   progressBar.style.setProperty("--progress", `${progressBar.valueAsNumber}%`)
-  previewBar.style.setProperty("--progress", `${progressBar.valueAsNumber}%`)
   currentTime.textContent = secondsToTime(video.currentTime)
   timeRemaining.textContent = `-${secondsToTime(
     video.duration - video.currentTime
@@ -329,7 +326,7 @@ video.onended = () => {
 
 // ----------------------------- KEYBOARD SHORTCUTS -----------------------------
 let isFullScreenKey = false // Variable to track if 'f' or 'g' was pressed
-let controls = document.querySelector(".controls") //Hide Playbar/Controls
+let div = document.querySelector(".controls") //Hide Playbar/Controls
 
 document.addEventListener("keydown", (e) => {
   // Ignore key presses when a modifier key is pressed
@@ -346,15 +343,14 @@ document.addEventListener("keydown", (e) => {
       break
     case "g":
       isFullScreenKey = true // Set variable to true when 'g' pressed
-      if (fullscreenState === 1 && controls.classList.contains("hidden")) {
+      if (fullscreenState === 1 && div.classList.contains("hidden")) {
         // If video is in fullscreen state
         toggleStretchVideo() // Exit fullscreen and unstretch the video
         document.exitFullscreen()
-        if (!controls.classList.contains("hidden")) {
-          controls.classList.add("hidden") // Hide controls if they're not hidden
+        if (!div.classList.contains("hidden")) {
+          div.classList.add("hidden") // Hide controls if they're not hidden
         } else {
-          controls.classList.remove("hidden") // Show controls if they're hidden
-          previewBar.style.display = "none"
+          div.classList.remove("hidden") // Show controls if they're hidden
         }
         fullscreenState = 0
       } else {
@@ -407,17 +403,16 @@ document.addEventListener("keydown", (e) => {
       else video.playbackRate = 3
       break
     case "h":
-    case "H": // Hide Playbar/Controls
+    case "H": // //Hide Playbar/Controls
       if (fullscreenState === 1) {
         // If the video is in fullscreen state
-        if (controls.classList.contains("hidden")) {
+        if (div.classList.contains("hidden")) {
           // Same as pressing 'f'
           toggleStretchVideo()
-          if (!controls.classList.contains("hidden")) {
-            controls.classList.add("hidden") // Hide the controls if they're not hidden
+          if (!div.classList.contains("hidden")) {
+            div.classList.add("hidden") // Hide the controls if they're not hidden
           } else {
-            controls.classList.remove("hidden") // Show the controls if they're hidden
-            previewBar.style.display = "none"
+            div.classList.remove("hidden") // Show the controls if they're hidden
           }
           toggleStretchVideo()
         } else {
@@ -426,21 +421,10 @@ document.addEventListener("keydown", (e) => {
         }
       } else {
         // If not in fullscreen mode, hide the video bar normally
-        if (controls.classList.contains("hidden")) {
-          controls.classList.remove("hidden")
-          previewBar.style.display = "none"
+        if (div.classList.contains("hidden")) {
+          div.classList.remove("hidden")
         } else {
-          controls.classList.add("hidden")
-        }
-      }
-      break
-    case "v": // Show Preview Bar
-    case "V":
-      if (controls.classList.contains("hidden")) {
-        if (!previewBar.style.display || previewBar.style.display === "none") {
-          previewBar.style.display = "block"
-        } else {
-          previewBar.style.display = "none"
+          div.classList.add("hidden")
         }
       }
       break
@@ -462,14 +446,13 @@ document.addEventListener("keydown", (e) => {
         document.activeElement.tagName !== "BUTTON" &&
         document.activeElement.tagName !== "INPUT"
       ) {
-        if (fullscreenState === 1 && controls.classList.contains("hidden")) {
+        if (fullscreenState === 1 && div.classList.contains("hidden")) {
           // If the video is in fullscreen state
           toggleStretchVideo()
-          if (!controls.classList.contains("hidden")) {
-            controls.classList.add("hidden") // Hide the controls if they're not hidden
+          if (!div.classList.contains("hidden")) {
+            div.classList.add("hidden") // Hide the controls if they're not hidden
           } else {
-            controls.classList.remove("hidden") // Show the controls if they're hidden
-            previewBar.style.display = "none"
+            div.classList.remove("hidden") // Show the controls if they're hidden
           }
           toggleStretchVideo()
         } else {
@@ -538,8 +521,7 @@ function handleVisibilityChange() {
     if (stretchingMode !== 0) {
       toggleStretchVideo() // If the video is stretched, toggleStretchVideo to unstretch
     }
-    controls.classList.remove("hidden") // Show the video bar
-    previewBar.style.display = "none"
+    div.classList.remove("hidden") // Show the video bar
     fullscreenState = 0
   }
 }
@@ -552,9 +534,8 @@ function toggleFullScreen() {
   if (document.fullscreenElement) {
     // Check if the document is currently in fullscreen
     document.exitFullscreen()
-    if (controls.classList.contains("hidden")) {
-      controls.classList.remove("hidden") // Show the controls if they're hidden
-      previewBar.style.display = "none"
+    if (div.classList.contains("hidden")) {
+      div.classList.remove("hidden") // Show the controls if they're hidden
     }
     fullscreenState = 0
   } else {
@@ -568,16 +549,16 @@ document.addEventListener("fullscreenchange", (event) => {
     if (stretchingMode !== 0) {
       toggleStretchVideo() // If the video is stretched, unstretch it
     }
-    if (controls.classList.contains("hidden")) {
-      controls.classList.remove("hidden") // Show the video bar
-      previewBar.style.display = "none"
+    if (div.classList.contains("hidden")) {
+      div.classList.remove("hidden") // Show the video bar
     }
     fullscreenState = 0
   }
+  //isFullScreenKey = false; && !isFullScreenKey // Reset the variable after the fullscreen change
 })
 
 let stretchingMode = 0 // 0: Original, 1: Strech Video
-let isVideoReady = false
+let isVideoReady = false // Add this flag
 
 video.onloadedmetadata = function () {
   isVideoReady = true // Set the flag to true when the video is ready
@@ -596,14 +577,10 @@ function toggleStretchVideo() {
 
   if (aspect >= 1.77) {
     // 16:9 video
-    mode = controls.classList.contains("hidden")
-      ? "mode-1"
-      : "fullscreen-mode-1"
+    mode = div.classList.contains("hidden") ? "mode-1" : "fullscreen-mode-1"
   } else {
     // 4:3 video
-    mode = controls.classList.contains("hidden")
-      ? "mode-2"
-      : "fullscreen-mode-2"
+    mode = div.classList.contains("hidden") ? "mode-2" : "fullscreen-mode-2"
   }
 
   if (stretchingMode === 0) {

@@ -32,8 +32,6 @@
   accent-color: var(--main-color);
 
   /*Default Colors -- My Addition*/
-  --video-bar: #f3c669;
-
   --main-color: var(--dark);
   --text1: var(--text1-dark);
   --text2: var(--text2-dark);
