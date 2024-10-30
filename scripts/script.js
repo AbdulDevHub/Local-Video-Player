@@ -1,59 +1,70 @@
 "use strict"
 
-let preferences = {
-  speed: 1.8,
-  timeSkip: 10,
-}
+// ----------------------------- GLOBAL VARIABLES -----------------------------
+let preferences = { speed: 1.8, timeSkip: 10 }
+let localStorageKey
+let stretchedFullscreenActive = false
+let pressedGKey = false
+let stretchingModeActive = false
+let isVideoReady = false
+let originalTime
+let isActivated = false
 
-// ----------------------------- VIDEO SELECTION -----------------------------
-// DRAG AND DROP
 const dragPanel = document.querySelector("#drag-panel")
 const dropOverlay = document.querySelector("#drop-overlay")
 const droppableElements = document.querySelectorAll(".droppable")
 const fileName = document.querySelector("#file-name")
 const video = document.querySelector("video")
-let localStorageKey
+const filePicker = document.querySelector("#file-picker")
 
+const player = document.querySelector(".player")
+const playBtn = document.querySelector(".play-btn")
+const fullscreenBtn = document.querySelector(".fullscreen-btn")
+const zoomBtn = document.querySelector(".zoom-btn")
+const speedControls = document.querySelector("#speed-controls")
+
+const controls = document.querySelector(".controls")
+const progressBar = document.querySelector("#video-bar")
+const previewBar = document.querySelector("#preview-bar")
+const timeIndicator = document.querySelector("#time-indicator")
+const currentTime = document.querySelector(".current-time")
+const timeRemaining = document.querySelector(".time-remaining")
+const replayBtn = document.querySelector(".replay-btn")
+const forwardBtn = document.querySelector(".forward-btn")
+const duration = document.querySelector(".duration")
+
+// ----------------------------- VIDEO SELECTION -----------------------------
 droppableElements.forEach((droppable) => {
-  droppable.addEventListener("dragenter", (e) => {
-    if (e.dataTransfer.items[0].type.startsWith("video/")) {
-      droppable.dataset.fileHover = true
-      dropOverlay.hidden = false
-      console.info(
-        `A video file has entered #${e.target.id}'s dragging area. The drop overlay is now visible.`
-      )
-    }
-  })
+  droppable.addEventListener("dragenter", handleDragEnter)
 })
-
 dropOverlay.addEventListener("dragover", (e) => e.preventDefault())
+dropOverlay.addEventListener("drop", handleDrop)
+dropOverlay.addEventListener("dragleave", handleDragEnd)
+filePicker.addEventListener("click", openFilePicker)
 
-dropOverlay.addEventListener("drop", async (e) => {
-  console.info(
-    `A ${e.dataTransfer.items[0].type} file was dropped on #${e.target.id}.`
-  )
+function handleDragEnter(e) {
+  if (e.dataTransfer.items[0].type.startsWith("video/")) {
+    e.target.dataset.fileHover = true
+    dropOverlay.hidden = false
+    console.info(`A video file has entered #${e.target.id}'s dragging area.`)
+  }
+}
+
+async function handleDrop(e) {
   e.preventDefault()
-
-  // Type check is done in dragenter and in the click handler
   const fileHandle = await e.dataTransfer.items[0].getAsFileSystemHandle()
-
   manageFileHandle(fileHandle)
   handleDragEnd()
-})
-
-dropOverlay.addEventListener("dragleave", handleDragEnd)
+  console.info(`A ${e.dataTransfer.items[0].type} file was dropped.`)
+}
 
 function handleDragEnd() {
   dropOverlay.hidden = true
-  droppableElements.forEach((droppable) => {
-    delete droppable.dataset.fileHover
-  })
+  droppableElements.forEach((el) => delete el.dataset.fileHover)
   console.info("The drag event has ended. The drop overlay was hidden.")
 }
 
-// FILE INPUT
-const filePicker = document.querySelector("#file-picker")
-filePicker.addEventListener("click", async () => {
+async function openFilePicker() {
   try {
     const [fileHandle] = await window.showOpenFilePicker({
       excludeAcceptAllOption: true,
@@ -76,12 +87,10 @@ filePicker.addEventListener("click", async () => {
       ],
       multiple: false,
     })
-
     manageFileHandle(fileHandle)
-  } catch (abortError) {}
-})
+  } catch {}
+}
 
-// FILE HANDLING
 async function manageFileHandle(fileHandle) {
   const file = await fileHandle.getFile()
 
@@ -97,172 +106,146 @@ async function manageFileHandle(fileHandle) {
     console.info("The drag panel was hidden. The player is now visible.")
   }
 
-  // Don't change the order of these lines!
   localStorageKey = await hashFile(file)
   video.src = URL.createObjectURL(file)
 
-  // Remove the file extension
+  // Remove file extension
   fileName.textContent = file.name.replace(/\.[^.]+$/, "")
 
-  // Update the media session on first play
-  video.addEventListener(
-    "seeked",
-    () => {
-      const artwork = capture()
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: fileName.textContent,
-        artwork: [{ src: artwork, sizes: "512x512", type: "image/png" }],
-      })
-      console.info("Title and artwork for Global Media Controls updated.")
-    },
-    { once: true }
-  )
+  // Update media session on first play
+  video.addEventListener("seeked", updateMediaSession, { once: true })
 
-  // Bind the global media controls to the video
-  const actionHandlers = [
+  // Bind global media controls to video
+  ;[
     ["seekbackward", replay],
     ["seekforward", forward],
-  ]
-
-  for (const [action, handler] of actionHandlers) {
+  ].forEach(([action, handler]) =>
     navigator.mediaSession.setActionHandler(action, handler)
-  }
+  )
+}
+
+function updateMediaSession() {
+  const artwork = captureFrame()
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: fileName.textContent,
+    artwork: [{ src: artwork, sizes: "512x512", type: "image/png" }],
+  })
+  console.info("Title and artwork for Global Media Controls updated.")
 }
 
 // ----------------------------- CONTROL PLAYBACK [BOTTOM NAVIGATION] -----------------------------
-const player = document.querySelector(".player")
-const playBtn = document.querySelector(".play-btn")
-const fullscreenBtn = document.querySelector(".fullscreen-btn")
-const zoomBtn = document.querySelector(".zoom-btn")
-const speedControls = document.querySelector("#speed-controls")
-
 // Play/pause
-playBtn.onclick = togglePlay
-video.onclick = togglePlay
-video.onpause = () => {
-  playBtn.textContent = "play_arrow"
-}
-video.onplay = () => {
-  playBtn.textContent = "pause"
-}
-
-// Fullscreen Button
-let fullscreenState = 0 // 0: Normal, 1: Fullscreen + Stretch
-
-function handleFullScreenButton() {
-  if (fullscreenState === 0) {
-    // If the video is in normal state
-    player.requestFullscreen() // Go fullscreen
-    if (stretchingMode === 0) {
-      toggleStretchVideo() // Stretch the video if it's not stretched
-    }
-    fullscreenState = 1
-  } else {
-    // If the video is in fullscreen + stretch state
-    document.exitFullscreen() // Exit fullscreen
-    if (stretchingMode !== 0) {
-      toggleStretchVideo() // Unstretch the video if it's stretched
-    }
-    fullscreenState = 0
-  }
-}
+playBtn.onclick = video.onclick = togglePlay
+video.onpause = () => (playBtn.textContent = "play_arrow")
+video.onplay = () => (playBtn.textContent = "pause")
 
 fullscreenBtn.onclick = handleFullScreenButton
-document.onfullscreenchange = () => {
-  if (fullscreenState === 0) {
-    fullscreenBtn.textContent = "fullscreen"
-  } else {
-    fullscreenBtn.textContent = "fullscreen_exit"
-  }
+document.onfullscreenchange = updateFullScreenIcon
+video.addEventListener("dblclick", toggleFullScreen)
+
+// Fullscreen
+function handleFullScreenButton() {
+  stretchedFullscreenActive ? exitFullScreen() : enterFullScreen()
 }
 
-video.addEventListener("dblclick", toggleFullScreen)
+function enterFullScreen() {
+  player.requestFullscreen()
+  if (!stretchingModeActive) toggleStretchVideo()
+  stretchedFullscreenActive = true
+}
+
+function exitFullScreen() {
+  document.exitFullscreen()
+  if (stretchingModeActive) toggleStretchVideo()
+  stretchedFullscreenActive = false
+}
+
+function updateFullScreenIcon() {
+  fullscreenBtn.textContent = stretchedFullscreenActive
+    ? "fullscreen_exit"
+    : "fullscreen"
+}
+
+function toggleFullScreen() {
+  if (document.fullscreenElement) {
+    // Check if the document is currently in fullscreen
+    document.exitFullscreen()
+    if (controls.classList.contains("hidden")) {
+      controls.classList.remove("hidden") // Show the controls if they're hidden
+      previewBar.style.display = "none"
+    }
+    stretchedFullscreenActive = false
+  } else player.requestFullscreen()
+}
 
 // Zoom
 zoomBtn.onclick = toggleZoom
 
 function toggleZoom() {
-  if (!div.classList.contains("hidden")) {
-    div.classList.add("hidden") // Hide the controls if they're not hidden
+  if (!controls.classList.contains("hidden")) {
+    controls.classList.add("hidden") // Hide the controls if they're not hidden
   } else {
-    div.classList.remove("hidden") // Show the controls if they're hidden
+    controls.classList.remove("hidden") // Show the controls if they're hidden
+    previewBar.style.display = "none"
   }
-  if (fullscreenState === 1) {
-    toggleStretchVideo() // Update the stretch mode based on the new visibility state of the video bar
+  if (stretchedFullscreenActive) {
+    toggleStretchVideo() // Update stretch mode based on new visibility state of video bar
     toggleStretchVideo()
-  }
-  if (fullscreenState === 0) {
-    // If the video is in normal state
-    handleFullScreenButton() // Go fullscreen and stretch the video
-  }
+  } else handleFullScreenButton() // Go fullscreen and stretch video
 }
 
 function toggleZoomCrop() {
-  if (zoomBtn.textContent === "zoom_out_map") {
-    video.style.objectFit = "cover"
-    zoomBtn.textContent = "crop_free"
-  } else {
-    video.style.objectFit = "contain"
-    zoomBtn.textContent = "zoom_out_map"
-  }
+  const isZoomedIn = zoomBtn.textContent === "zoom_out_map"
+  video.style.objectFit = isZoomedIn ? "cover" : "contain"
+  zoomBtn.textContent = isZoomedIn ? "crop_free" : "zoom_out_map"
 }
 
 // Speed
-video.onratechange = () => {
-  speedControls.value = video.playbackRate.toFixed(2)
-}
-
-speedControls.onchange = () => {
-  // Caused by keyboard shortcuts
+function updatePlaybackRate() {
   speedControls.value = parseFloat(speedControls.value).toFixed(2)
   video.playbackRate = clamp(0.1, speedControls.value, 16)
 }
 
-speedControls.oninput = () => {
-  // Caused by keyboard input
-  speedControls.value = parseFloat(speedControls.value).toFixed(2)
-}
+video.onratechange = () => (speedControls.value = video.playbackRate.toFixed(2))
+speedControls.onchange = speedControls.oninput = updatePlaybackRate
 
 // ----------------------------- TIME -----------------------------
-const progressBar = document.querySelector("#video-bar")
-const timeIndicator = document.querySelector("#time-indicator")
-const currentTime = document.querySelector(".current-time")
-const timeRemaining = document.querySelector(".time-remaining")
-const replayBtn = document.querySelector(".replay-btn")
-const forwardBtn = document.querySelector(".forward-btn")
-const duration = document.querySelector(".duration")
+video.addEventListener("loadedmetadata", initializeVideo)
+video.addEventListener("timeupdate", updateTimeAndProgress)
+video.addEventListener("emptied", () => (playBtn.textContent = "play_arrow"))
+progressBar.addEventListener("input", seekVideo)
+progressBar.onfocus = () => progressBar.blur()
+replayBtn.onclick = replay
+forwardBtn.onclick = forward
 
-video.addEventListener("loadedmetadata", () => {
-  if (localStorage.getItem(localStorageKey)) {
-    restoreFromLocalStorage()
-  } else {
-    console.info("No video state found in local storage.")
-  }
+// Convert seconds to time in format (h:)mm:ss
+function secondsToTime(seconds) {
+  return new Date(seconds * 1000)
+    .toISOString()
+    .substring(seconds >= 3600 ? 12 : 14, 19)
+}
 
+function initializeVideo() {
+  localStorage.getItem(localStorageKey)
+    ? restoreFromLocalStorage()
+    : console.info("No video state found in local storage.")
   updateProgressBarValue()
   updateIndicators()
   duration.textContent = secondsToTime(video.duration)
-})
+}
 
-video.addEventListener("timeupdate", () => {
-  if (video.readyState < HTMLMediaElement.HAVE_METADATA) {
-    console.info(
-      "The video metadata is not loaded yet. Skipping timeupdate event."
-    )
-    return
-  }
+function updateTimeAndProgress() {
+  if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    updateProgressBarValue()
+    updateIndicators()
+  } else
+    console.info("Video metadata not loaded yet. Skipping timeupdate event.")
+}
 
-  updateProgressBarValue()
-  updateIndicators()
-})
-
-// Seek to the point clicked on the progress bar
-progressBar.addEventListener("input", () => {
+function seekVideo() {
   video.currentTime = (progressBar.valueAsNumber * video.duration) / 100
-
-  // Needed to show the time in real-time when the progress bar is dragged
-  updateIndicators()
-})
+  updateIndicators() // Need to show time in real-time when progress bar dragged
+}
 
 function updateProgressBarValue() {
   progressBar.valueAsNumber = (video.currentTime * 100) / video.duration
@@ -270,19 +253,23 @@ function updateProgressBarValue() {
 
 function updateIndicators() {
   progressBar.style.setProperty("--progress", `${progressBar.valueAsNumber}%`)
+  previewBar.style.setProperty("--progress", `${progressBar.valueAsNumber}%`)
   currentTime.textContent = secondsToTime(video.currentTime)
   timeRemaining.textContent = `-${secondsToTime(
     video.duration - video.currentTime
   )}`
 }
 
-// progressBar also has tabindex="-1"
-progressBar.onfocus = () => {
-  progressBar.blur()
+function replay() {
+  video.currentTime = Math.max(video.currentTime - preferences.timeSkip, 0)
 }
 
-replayBtn.onclick = replay
-forwardBtn.onclick = forward
+function forward() {
+  video.currentTime = Math.min(
+    video.currentTime + preferences.timeSkip,
+    video.duration
+  )
+}
 
 // Toggle current time/remaining time
 timeIndicator.addEventListener("click", () => {
@@ -292,31 +279,20 @@ timeIndicator.addEventListener("click", () => {
   ]
 })
 
-video.addEventListener("emptied", () => {
-  // Needed when another video is loaded while the current one is playing
-  playBtn.textContent = "play_arrow"
-})
-
-// Save time in local storage when the window is closed/refreshed
+// Save time in local storage when window is closed/refreshed
 window.onbeforeunload = () => {
-  if (video.src && !video.ended) {
-    updateLocalStorage()
-  }
+  if (video.src && !video.ended) updateLocalStorage()
 }
 
 // CLEANUP
 console.groupCollapsed(
   "Saved states of videos last opened more than 30 days ago will be deleted."
 )
-for (const key of Object.keys(localStorage)) {
+Object.keys(localStorage).forEach((key) => {
   const entryDate = new Date(JSON.parse(localStorage.getItem(key)).last_opened)
-  if (entryDate < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
-    localStorage.removeItem(key)
-    console.info(`${key} deleted.`)
-  } else {
-    console.info(`${key} kept.`)
-  }
-}
+  const isExpired = entryDate < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  isExpired ? localStorage.removeItem(key) : console.info(`${key} kept.`)
+})
 console.groupEnd()
 
 video.onended = () => {
@@ -325,16 +301,10 @@ video.onended = () => {
 }
 
 // ----------------------------- KEYBOARD SHORTCUTS -----------------------------
-let isFullScreenKey = false // Variable to track if 'f' or 'g' was pressed
-let div = document.querySelector(".controls") //Hide Playbar/Controls
-
 document.addEventListener("keydown", (e) => {
   // Ignore key presses when a modifier key is pressed
   if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return
-
-  if (e.key !== " ") {
-    document.activeElement.blur()
-  }
+  if (e.key !== " ") document.activeElement.blur()
 
   switch (e.key) {
     case " ": // Toggle play
@@ -342,17 +312,19 @@ document.addEventListener("keydown", (e) => {
       togglePlay()
       break
     case "g":
-      isFullScreenKey = true // Set variable to true when 'g' pressed
-      if (fullscreenState === 1 && div.classList.contains("hidden")) {
+    case "G":
+      pressedGKey = true
+      if (stretchedFullscreenActive && controls.classList.contains("hidden")) {
         // If video is in fullscreen state
         toggleStretchVideo() // Exit fullscreen and unstretch the video
         document.exitFullscreen()
-        if (!div.classList.contains("hidden")) {
-          div.classList.add("hidden") // Hide controls if they're not hidden
+        if (!controls.classList.contains("hidden")) {
+          controls.classList.add("hidden") // Hide controls if they're not hidden
         } else {
-          div.classList.remove("hidden") // Show controls if they're hidden
+          controls.classList.remove("hidden") // Show controls if they're hidden
+          previewBar.style.display = "none"
         }
-        fullscreenState = 0
+        stretchedFullscreenActive = false
       } else {
         toggleZoom()
       }
@@ -403,16 +375,17 @@ document.addEventListener("keydown", (e) => {
       else video.playbackRate = 3
       break
     case "h":
-    case "H": // //Hide Playbar/Controls
-      if (fullscreenState === 1) {
+    case "H": // Hide Playbar/Controls
+      if (stretchedFullscreenActive) {
         // If the video is in fullscreen state
-        if (div.classList.contains("hidden")) {
+        if (controls.classList.contains("hidden")) {
           // Same as pressing 'f'
           toggleStretchVideo()
-          if (!div.classList.contains("hidden")) {
-            div.classList.add("hidden") // Hide the controls if they're not hidden
+          if (!controls.classList.contains("hidden")) {
+            controls.classList.add("hidden") // Hide the controls if they're not hidden
           } else {
-            div.classList.remove("hidden") // Show the controls if they're hidden
+            controls.classList.remove("hidden") // Show the controls if they're hidden
+            previewBar.style.display = "none"
           }
           toggleStretchVideo()
         } else {
@@ -421,10 +394,21 @@ document.addEventListener("keydown", (e) => {
         }
       } else {
         // If not in fullscreen mode, hide the video bar normally
-        if (div.classList.contains("hidden")) {
-          div.classList.remove("hidden")
+        if (controls.classList.contains("hidden")) {
+          controls.classList.remove("hidden")
+          previewBar.style.display = "none"
         } else {
-          div.classList.add("hidden")
+          controls.classList.add("hidden")
+        }
+      }
+      break
+    case "v": // Show Preview Bar
+    case "V":
+      if (controls.classList.contains("hidden")) {
+        if (!previewBar.style.display || previewBar.style.display === "none") {
+          previewBar.style.display = "block"
+        } else {
+          previewBar.style.display = "none"
         }
       }
       break
@@ -446,17 +430,21 @@ document.addEventListener("keydown", (e) => {
         document.activeElement.tagName !== "BUTTON" &&
         document.activeElement.tagName !== "INPUT"
       ) {
-        if (fullscreenState === 1 && div.classList.contains("hidden")) {
+        if (
+          stretchedFullscreenActive &&
+          controls.classList.contains("hidden")
+        ) {
           // If the video is in fullscreen state
           toggleStretchVideo()
-          if (!div.classList.contains("hidden")) {
-            div.classList.add("hidden") // Hide the controls if they're not hidden
+          if (!controls.classList.contains("hidden")) {
+            controls.classList.add("hidden") // Hide the controls if they're not hidden
           } else {
-            div.classList.remove("hidden") // Show the controls if they're hidden
+            controls.classList.remove("hidden") // Show the controls if they're hidden
+            previewBar.style.display = "none"
           }
           toggleStretchVideo()
         } else {
-          isFullScreenKey = true // Set the variable to true when 'f' is pressed
+          pressedGKey = true // Set the variable to true when 'f' is pressed
           handleFullScreenButton()
         }
       }
@@ -464,17 +452,26 @@ document.addEventListener("keydown", (e) => {
 })
 
 // ----------------------------- CTRL STRECH FEATURE -----------------------------
-let scaleX = 1
-let scaleY = 1
+let scaleX = 1,
+  scaleY = 1
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey) {
-    if (e.key === "ArrowUp") scaleY += 0.01
-    else if (e.key === "ArrowDown") scaleY -= 0.01
-    else if (e.key === "ArrowRight") scaleX += 0.01
-    else if (e.key === "ArrowLeft") scaleX -= 0.01
-    else {
-      scaleX = 1
-      scaleY = 1
+    switch (e.key) {
+      case "ArrowUp":
+        scaleY += 0.01
+        break
+      case "ArrowDown":
+        scaleY -= 0.01
+        break
+      case "ArrowRight":
+        scaleX += 0.01
+        break
+      case "ArrowLeft":
+        scaleX -= 0.01
+        break
+      default:
+        scaleX = 1
+        scaleY = 1
     }
     video.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})`
   }
@@ -488,26 +485,12 @@ document.addEventListener("keydown", (e) => {
 function togglePlay() {
   video.paused ? video.play() : video.pause()
 }
-
 function toggleMute() {
   video.muted = !video.muted
 }
-
 function clamp(min, value, max) {
   return Math.min(Math.max(value, min), max)
 }
-
-function replay() {
-  video.currentTime = Math.max(video.currentTime - preferences.timeSkip, 0)
-}
-
-function forward() {
-  video.currentTime = Math.min(
-    video.currentTime + preferences.timeSkip,
-    video.duration
-  )
-}
-
 function togglePictureInPicture() {
   document.pictureInPictureElement
     ? document.exitPictureInPicture()
@@ -518,77 +501,52 @@ function togglePictureInPicture() {
 function handleVisibilityChange() {
   if (document.visibilityState === "hidden") {
     // Page is not visible, perform actions here
-    if (stretchingMode !== 0) {
-      toggleStretchVideo() // If the video is stretched, toggleStretchVideo to unstretch
-    }
-    div.classList.remove("hidden") // Show the video bar
-    fullscreenState = 0
+    if (stretchingModeActive) toggleStretchVideo()
+    controls.classList.remove("hidden")
+    previewBar.style.display = "none"
+    stretchedFullscreenActive = false
   }
 }
 
 // Attach the event listener for visibility change
 document.addEventListener("visibilitychange", handleVisibilityChange)
-
-// Modify the toggleFullScreen function
-function toggleFullScreen() {
-  if (document.fullscreenElement) {
-    // Check if the document is currently in fullscreen
-    document.exitFullscreen()
-    if (div.classList.contains("hidden")) {
-      div.classList.remove("hidden") // Show the controls if they're hidden
-    }
-    fullscreenState = 0
-  } else {
-    player.requestFullscreen()
-  }
-}
-
-document.addEventListener("fullscreenchange", (event) => {
+document.addEventListener("fullscreenchange", () => {
   if (!document.fullscreenElement) {
-    // If the video is not in fullscreen mode
-    if (stretchingMode !== 0) {
-      toggleStretchVideo() // If the video is stretched, unstretch it
+    if (stretchingModeActive) toggleStretchVideo()
+    if (controls.classList.contains("hidden")) {
+      controls.classList.remove("hidden")
+      previewBar.style.display = "none"
     }
-    if (div.classList.contains("hidden")) {
-      div.classList.remove("hidden") // Show the video bar
-    }
-    fullscreenState = 0
+    stretchedFullscreenActive = false
   }
-  //isFullScreenKey = false; && !isFullScreenKey // Reset the variable after the fullscreen change
 })
 
-let stretchingMode = 0 // 0: Original, 1: Strech Video
-let isVideoReady = false // Add this flag
-
-video.onloadedmetadata = function () {
-  isVideoReady = true // Set the flag to true when the video is ready
-  if (fullscreenState === 1) {
-    // If the video is in fullscreen state
-    toggleStretchVideo() // Stretch the video when it's ready
-  }
+// ----------------------------- VIDEO STRETCHING -----------------------------
+video.onloadedmetadata = () => {
+  isVideoReady = true
+  if (stretchedFullscreenActive) toggleStretchVideo()
 }
 
 function toggleStretchVideo() {
-  if (!isVideoReady) return // If the video is not ready, ignore the stretch
+  if (!isVideoReady) return
 
   // Calculate the scale factor based on the video's aspect ratio
   const aspect = video.videoWidth / video.videoHeight
-  let mode
+  const mode =
+    aspect >= 1.77
+      ? controls.classList.contains("hidden")
+        ? "mode-1"
+        : "fullscreen-mode-1"
+      : controls.classList.contains("hidden")
+      ? "mode-2"
+      : "fullscreen-mode-2"
 
-  if (aspect >= 1.77) {
-    // 16:9 video
-    mode = div.classList.contains("hidden") ? "mode-1" : "fullscreen-mode-1"
-  } else {
-    // 4:3 video
-    mode = div.classList.contains("hidden") ? "mode-2" : "fullscreen-mode-2"
-  }
-
-  if (stretchingMode === 0) {
-    stretchingMode = 1
+  if (!stretchingModeActive) {
+    stretchingModeActive = true
     video.classList.add("stretchClass", mode)
     console.log(`Video stretching enabled. Mode: ${mode}`)
   } else {
-    stretchingMode = 0
+    stretchingModeActive = false
     video.classList.remove(
       "stretchClass",
       "mode-1",
@@ -600,38 +558,13 @@ function toggleStretchVideo() {
   }
 }
 
-function toggleTimeIndicator() {
-  ;[currentTime.hidden, timeRemaining.hidden] = [
-    timeRemaining.hidden,
-    currentTime.hidden,
-  ]
-}
-
-// Convert seconds to time in format (h:)mm:ss
-// Use https://tc39.es/proposal-temporal/docs/duration.html when available
-function secondsToTime(seconds) {
-  return new Date(seconds * 1000)
-    .toISOString()
-    .substring(seconds >= 3600 ? 12 : 14, 19)
-}
-
 // ----------------------------- UTILITIES -----------------------------
 async function hashFile(file) {
-  // Get byte array of file
   const arrayBuffer = await file.arrayBuffer()
-
-  // Hash the byte array
-  const hashAsArrayBuffer = await crypto.subtle.digest("SHA-1", arrayBuffer)
-
-  // Get the hex value of each byte and store it in an array
-  const hashAsUint8 = new Uint8Array(hashAsArrayBuffer)
-  const hashAsArray = Array.from(hashAsUint8)
-
-  // Convert each byte to a hex string
-  const hashAsString = hashAsArray
+  const hashBuffer = await crypto.subtle.digest("SHA-1", arrayBuffer)
+  return Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("")
-  return hashAsString
 }
 
 function updateLocalStorage() {
@@ -651,7 +584,7 @@ function restoreFromLocalStorage() {
   console.info("Video state restored from local storage.")
 }
 
-function capture() {
+function captureFrame() {
   const canvas = document.createElement("canvas")
   canvas.width = canvas.height = 512
 
@@ -661,7 +594,6 @@ function capture() {
   )
   const x = canvas.width / 2 - (video.videoWidth / 2) * scale
   const y = canvas.height / 2 - (video.videoHeight / 2) * scale
-
   const context = canvas.getContext("2d")
   context.drawImage(
     video,
@@ -670,67 +602,45 @@ function capture() {
     video.videoWidth * scale,
     video.videoHeight * scale
   )
-
-  const dataURL = canvas.toDataURL()
-
-  return dataURL
+  return canvas.toDataURL()
 }
 
 // ----------------------------- PROGRESS BAR SEEKER GIANT -----------------------------
-let originalTime = undefined
-let isActivated = false
-
-// Add event listener for keydown
 window.addEventListener("keydown", (e) => {
   if (e.key === "A") {
-    isActivated = !isActivated // Toggle the activation state
+    isActivated = !isActivated
     if (isActivated) {
-      originalTime = video.currentTime // Save the original time
-      if (!video.paused) {
-        // If the video is playing
-        video.pause() // Pause the video
-      }
-    } else {
-      video.currentTime = originalTime // Reset the video's current time to the original time
-    }
+      originalTime = video.currentTime
+      if (!video.paused) video.pause()
+    } else video.currentTime = originalTime
   }
 })
 
-// Add event listener for mousemove
 window.addEventListener("mousemove", (e) => {
-  if (isActivated) {
-    // Only update the video's current time if the feature is activated
-    let rect = progressBar.getBoundingClientRect()
-    let x = e.clientX - rect.left // Get the x coordinate of the mouse
-    let percent = x / rect.width // Calculate the percentage of the progress bar that was hovered over
-    video.currentTime = percent * video.duration // Update the video's current time
-  }
+  if (!isActivated) return
+  let rect = progressBar.getBoundingClientRect()
+  const percent = (e.clientX - rect.left) / rect.width
+  video.currentTime = percent * video.duration
 })
 
-// Add event listener for click
 progressBar.addEventListener("click", (e) => {
-  if (isActivated) {
-    // Only update the original time if the feature is activated
-    let rect = e.target.getBoundingClientRect()
-    let x = e.clientX - rect.left // Get the x coordinate of the mouse
-    let percent = x / rect.width // Calculate the percentage of the progress bar that was clicked
-    originalTime = percent * video.duration // Update the original time to the clicked position
-    video.currentTime = originalTime // Update the video's current time to the clicked position
-    isActivated = false // Deactivate the feature
-  }
+  if (!isActivated) return
+  let rect = e.target.getBoundingClientRect()
+  const percent = (e.clientX - rect.left) / rect.width
+  originalTime = percent * video.duration // Update original time to clicked position
+  video.currentTime = originalTime // Update video's current time to clicked position
+  isActivated = false
 })
 
-// Add event listener for play
 video.addEventListener("play", () => {
   if (isActivated) {
-    // If the feature is activated
-    isActivated = false // Deactivate the feature
-    originalTime = video.currentTime // Update the original time to the current time of the video
+    isActivated = false
+    originalTime = video.currentTime
   }
 })
 
 // ----------------------------- PROGRESS BAR SEEKER SMALL -----------------------------
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   const videoBar = document.getElementById("video-bar")
   const seekerPreview = document.getElementById("seeker-preview")
   const mainVideo = document.getElementById("main-video")
@@ -738,57 +648,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let isVideoLoaded = false
   let isSeekerActive = false
-  let aspectRatio, seekerWidth // Declare here
+  let aspectRatio, seekerWidth
 
-  mainVideo.addEventListener("loadedmetadata", function () {
+  mainVideo.addEventListener("loadedmetadata", () => {
     isVideoLoaded = true
-
-    // Calculate aspectRatio and seekerWidth here
     aspectRatio = mainVideo.videoWidth / mainVideo.videoHeight
     seekerWidth = aspectRatio >= 1.77 ? 340 : 260
   })
 
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "a") {
-      isSeekerActive = !isSeekerActive
-    }
-  })
+  document.addEventListener(
+    "keydown",
+    (e) => (isSeekerActive = e.key === "a" ? !isSeekerActive : isSeekerActive)
+  )
+  mainVideo.addEventListener("play", () => (isSeekerActive = false))
+  videoBar.addEventListener("click", () => (isSeekerActive = false))
 
-  mainVideo.addEventListener("play", function () {
-    isSeekerActive = false
-  })
-
-  videoBar.addEventListener("click", function (e) {
-    isSeekerActive = false
-  })
-
-  videoBar.addEventListener("mousemove", function (e) {
+  videoBar.addEventListener("mousemove", (e) => {
     if (!isVideoLoaded || !isSeekerActive) return
 
     const rect = videoBar.getBoundingClientRect()
     const percent = (e.clientX - rect.left) / rect.width
     const previewTime = percent * mainVideo.duration
-
-    // Update seeker preview position
     const previewLeft = e.clientX - seekerWidth / 2
+
     seekerPreview.style.left = `${previewLeft}px`
-
-    // Display seeker preview
     seekerPreview.style.display = "block"
-
-    // Update seeker preview content based on the current time
     previewVideo.src = mainVideo.src
     previewVideo.currentTime = previewTime
-    seekerPreview.innerHTML = `
-            <div>${formatTime(previewTime)}</div>
-        `
+    seekerPreview.innerHTML = `<div>${formatTime(previewTime)}</div>`
     seekerPreview.prepend(previewVideo)
   })
 
-  videoBar.addEventListener("mouseleave", function () {
-    // Hide seeker preview when leaving the video bar
-    seekerPreview.style.display = "none"
-  })
+  videoBar.addEventListener(
+    "mouseleave",
+    () => (seekerPreview.style.display = "none")
+  )
 
   // Helper function to format time in M:SS
   function formatTime(time) {

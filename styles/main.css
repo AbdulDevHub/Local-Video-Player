@@ -164,26 +164,59 @@ body {
   display: none;
 }
 
-#video-bar {
+#preview-bar {
   --track-height: 0.2rem;
-
-  position: absolute;
-  inset: 0;
-  translate: 0 -50%;
-
   appearance: none;
-
+  display: none;
+  z-index: 1;
   block-size: var(--track-height);
-
-  color: var(--text2);
+  color: var(--video-bar);
   background: linear-gradient(
     to right,
     currentColor var(--progress, 0%),
     var(--surface3) var(--progress, 0%)
   );
+}
 
-  transition: var(--duration);
+#preview-bar::-webkit-slider-thumb {
+  width: 0px;
+  height: 0px;
+  cursor: default;
+}
+
+#preview-bar::-webkit-slider-thumb:is(:hover, :focus-visible) {
+  box-shadow: none;
+}
+
+#video-bar {
+  --track-height: 0.2rem;
+  position: absolute;
+  inset: 0;
+  translate: 0 -50%;
+  appearance: none;
+  block-size: var(--track-height);
+  color: var(--video-bar);
+  background: linear-gradient(
+    to right,
+    currentColor var(--progress, 0%),
+    var(--surface3) var(--progress, 0%)
+  );
+  transition: 0.15s;
   transition-property: block-size, height, filter;
+}
+
+/* Create an invisible larger proximity area */
+#video-bar::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1.5rem; /* Larger proximity zone */
+  transform: translateY(-50%);
+  background: transparent;
+  pointer-events: all;
+  cursor: pointer;
 }
 
 #video-bar:is(:hover, :focus-visible) {
@@ -193,6 +226,7 @@ body {
 #video-bar::-webkit-slider-thumb {
   width: 10px;
   height: 10px;
+  transition: 0.15s;
 }
 
 #video-bar:hover::-webkit-slider-thumb {
@@ -202,14 +236,11 @@ body {
 
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
-
   --thumb-size: 1rem;
   block-size: var(--thumb-size);
   inline-size: var(--thumb-size);
   border-radius: 50%;
-
   background-color: currentColor;
-
   transition: box-shadow var(--duration);
 }
 

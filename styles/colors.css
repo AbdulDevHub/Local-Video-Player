@@ -41,6 +41,7 @@
   --surface4: var(--surface4-dark);
   --surface-shadow: var(--surface-shadow-dark);
   --shadow-strength: var(--shadow-strength-dark);
+  --video-bar: #f3c669;
 }
 
 /*@media (prefers-color-scheme: light) {
