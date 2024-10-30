@@ -3,9 +3,9 @@
 // ----------------------------- GLOBAL VARIABLES -----------------------------
 let preferences = { speed: 1.8, timeSkip: 10 }
 let localStorageKey
-let fullscreenState = 0 // 0: Normal, 1: Fullscreen + Stretch
+let stretchedFullscreenActive = false
 let pressedGKey = false
-let stretchingMode = 0 // 0: Original, 1: Strech Video
+let stretchingModeActive = false
 let isVideoReady = false
 let originalTime
 let isActivated = false
@@ -106,7 +106,6 @@ async function manageFileHandle(fileHandle) {
     console.info("The drag panel was hidden. The player is now visible.")
   }
 
-  // Don't change order of these lines!
   localStorageKey = await hashFile(file)
   video.src = URL.createObjectURL(file)
 
@@ -146,23 +145,25 @@ video.addEventListener("dblclick", toggleFullScreen)
 
 // Fullscreen
 function handleFullScreenButton() {
-  fullscreenState ? exitFullScreen() : enterFullScreen()
+  stretchedFullscreenActive ? exitFullScreen() : enterFullScreen()
 }
 
 function enterFullScreen() {
   player.requestFullscreen()
-  if (!stretchingMode) toggleStretchVideo()
-  fullscreenState = 1
+  if (!stretchingModeActive) toggleStretchVideo()
+  stretchedFullscreenActive = true
 }
 
 function exitFullScreen() {
   document.exitFullscreen()
-  if (stretchingMode) toggleStretchVideo()
-  fullscreenState = 0
+  if (stretchingModeActive) toggleStretchVideo()
+  stretchedFullscreenActive = false
 }
 
 function updateFullScreenIcon() {
-  fullscreenBtn.textContent = fullscreenState ? "fullscreen_exit" : "fullscreen"
+  fullscreenBtn.textContent = stretchedFullscreenActive
+    ? "fullscreen_exit"
+    : "fullscreen"
 }
 
 function toggleFullScreen() {
@@ -173,10 +174,8 @@ function toggleFullScreen() {
       controls.classList.remove("hidden") // Show the controls if they're hidden
       previewBar.style.display = "none"
     }
-    fullscreenState = 0
-  } else {
-    player.requestFullscreen()
-  }
+    stretchedFullscreenActive = false
+  } else player.requestFullscreen()
 }
 
 // Zoom
@@ -189,7 +188,7 @@ function toggleZoom() {
     controls.classList.remove("hidden") // Show the controls if they're hidden
     previewBar.style.display = "none"
   }
-  if (fullscreenState) {
+  if (stretchedFullscreenActive) {
     toggleStretchVideo() // Update stretch mode based on new visibility state of video bar
     toggleStretchVideo()
   } else handleFullScreenButton() // Go fullscreen and stretch video
@@ -315,7 +314,7 @@ document.addEventListener("keydown", (e) => {
     case "g":
     case "G":
       pressedGKey = true
-      if (fullscreenState === 1 && controls.classList.contains("hidden")) {
+      if (stretchedFullscreenActive && controls.classList.contains("hidden")) {
         // If video is in fullscreen state
         toggleStretchVideo() // Exit fullscreen and unstretch the video
         document.exitFullscreen()
@@ -325,7 +324,7 @@ document.addEventListener("keydown", (e) => {
           controls.classList.remove("hidden") // Show controls if they're hidden
           previewBar.style.display = "none"
         }
-        fullscreenState = 0
+        stretchedFullscreenActive = false
       } else {
         toggleZoom()
       }
@@ -377,7 +376,7 @@ document.addEventListener("keydown", (e) => {
       break
     case "h":
     case "H": // Hide Playbar/Controls
-      if (fullscreenState === 1) {
+      if (stretchedFullscreenActive) {
         // If the video is in fullscreen state
         if (controls.classList.contains("hidden")) {
           // Same as pressing 'f'
@@ -431,7 +430,10 @@ document.addEventListener("keydown", (e) => {
         document.activeElement.tagName !== "BUTTON" &&
         document.activeElement.tagName !== "INPUT"
       ) {
-        if (fullscreenState === 1 && controls.classList.contains("hidden")) {
+        if (
+          stretchedFullscreenActive &&
+          controls.classList.contains("hidden")
+        ) {
           // If the video is in fullscreen state
           toggleStretchVideo()
           if (!controls.classList.contains("hidden")) {
@@ -499,12 +501,12 @@ function togglePictureInPicture() {
 function handleVisibilityChange() {
   if (document.visibilityState === "hidden") {
     // Page is not visible, perform actions here
-    if (stretchingMode !== 0) {
+    if (stretchingModeActive) {
       toggleStretchVideo() // If the video is stretched, toggleStretchVideo to unstretch
     }
     controls.classList.remove("hidden") // Show the video bar
     previewBar.style.display = "none"
-    fullscreenState = 0
+    stretchedFullscreenActive = false
   }
 }
 
@@ -513,21 +515,21 @@ document.addEventListener("visibilitychange", handleVisibilityChange)
 document.addEventListener("fullscreenchange", () => {
   if (!document.fullscreenElement) {
     // If the video is not in fullscreen mode
-    if (stretchingMode !== 0) {
+    if (stretchingModeActive) {
       toggleStretchVideo() // If the video is stretched, unstretch it
     }
     if (controls.classList.contains("hidden")) {
       controls.classList.remove("hidden") // Show the video bar
       previewBar.style.display = "none"
     }
-    fullscreenState = 0
+    stretchedFullscreenActive = false
   }
 })
 
 // ----------------------------- VIDEO STRETCHING -----------------------------
 video.onloadedmetadata = () => {
   isVideoReady = true
-  if (fullscreenState) toggleStretchVideo()
+  if (stretchedFullscreenActive) toggleStretchVideo()
 }
 
 function toggleStretchVideo() {
@@ -544,12 +546,12 @@ function toggleStretchVideo() {
       ? "mode-2"
       : "fullscreen-mode-2"
 
-  if (stretchingMode === 0) {
-    stretchingMode = 1
+  if (!stretchingModeActive) {
+    stretchingModeActive = true
     video.classList.add("stretchClass", mode)
     console.log(`Video stretching enabled. Mode: ${mode}`)
   } else {
-    stretchingMode = 0
+    stretchingModeActive = false
     video.classList.remove(
       "stretchClass",
       "mode-1",
@@ -659,9 +661,12 @@ document.addEventListener("DOMContentLoaded", () => {
     seekerWidth = aspectRatio >= 1.77 ? 340 : 260
   })
 
-  document.addEventListener("keydown", (e) => isSeekerActive = e.key === "a" ? !isSeekerActive : isSeekerActive);
-  mainVideo.addEventListener("play", () => isSeekerActive = false);
-  videoBar.addEventListener("click", () => isSeekerActive = false);
+  document.addEventListener(
+    "keydown",
+    (e) => (isSeekerActive = e.key === "a" ? !isSeekerActive : isSeekerActive)
+  )
+  mainVideo.addEventListener("play", () => (isSeekerActive = false))
+  videoBar.addEventListener("click", () => (isSeekerActive = false))
 
   videoBar.addEventListener("mousemove", (e) => {
     if (!isVideoLoaded || !isSeekerActive) return
@@ -675,11 +680,14 @@ document.addEventListener("DOMContentLoaded", () => {
     seekerPreview.style.display = "block"
     previewVideo.src = mainVideo.src
     previewVideo.currentTime = previewTime
-    seekerPreview.innerHTML = `<div>${formatTime(previewTime)}</div>`;
+    seekerPreview.innerHTML = `<div>${formatTime(previewTime)}</div>`
     seekerPreview.prepend(previewVideo)
   })
 
-  videoBar.addEventListener("mouseleave", () => seekerPreview.style.display = "none");
+  videoBar.addEventListener(
+    "mouseleave",
+    () => (seekerPreview.style.display = "none")
+  )
 
   // Helper function to format time in M:SS
   function formatTime(time) {
