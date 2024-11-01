@@ -1,7 +1,7 @@
 "use strict"
 
 // ----------------------------- GLOBAL VARIABLES -----------------------------
-const preferences = { speed: 1.8, timeSkip: 10 }
+const preferences = { timeSkip: 10 }
 let localStorageKey
 let stretchedFullscreenActive = false
 let pressedGKey = false
@@ -12,13 +12,13 @@ let isActivated = false
 let scaleX = 1
 let scaleY = 1
 
-// DOM Element Selectors
 const elements = {
   dragPanel: document.querySelector("#drag-panel"),
   dropOverlay: document.querySelector("#drop-overlay"),
   droppableElements: document.querySelectorAll(".droppable"),
   fileName: document.querySelector("#file-name"),
   video: document.querySelector("video"),
+  seekerPreview: document.querySelector("#seeker-preview"),
   filePicker: document.querySelector("#file-picker"),
   player: document.querySelector(".player"),
   playBtn: document.querySelector(".play-btn"),
@@ -33,7 +33,7 @@ const elements = {
   timeRemaining: document.querySelector(".time-remaining"),
   replayBtn: document.querySelector(".replay-btn"),
   forwardBtn: document.querySelector(".forward-btn"),
-  duration: document.querySelector(".duration")
+  duration: document.querySelector(".duration"),
 }
 
 // ----------------------------- EVENT LISTENERS -----------------------------
@@ -84,15 +84,23 @@ async function openFilePicker() {
   try {
     const [fileHandle] = await window.showOpenFilePicker({
       excludeAcceptAllOption: true,
-      types: [{
-        description: "Videos",
-        accept: {
-          "video/*": [
-            ".avi", ".mp4", ".mpeg", ".ogv", ".ts", 
-            ".webm", ".3gp", ".3g2",
-          ],
+      types: [
+        {
+          description: "Videos",
+          accept: {
+            "video/*": [
+              ".avi",
+              ".mp4",
+              ".mpeg",
+              ".ogv",
+              ".ts",
+              ".webm",
+              ".3gp",
+              ".3g2",
+            ],
+          },
         },
-      }],
+      ],
       multiple: false,
     })
     manageFileHandle(fileHandle)
@@ -103,7 +111,9 @@ async function manageFileHandle(fileHandle) {
   const file = await fileHandle.getFile()
 
   if (elements.video.src) {
-    console.info("Video change detected, saving old video state in local storage…")
+    console.info(
+      "Video change detected, saving old video state in local storage…"
+    )
     updateLocalStorage()
     URL.revokeObjectURL(elements.video.src)
   } else {
@@ -142,25 +152,25 @@ const fullscreenActions = {
   toggleStretchedFullScreen() {
     stretchedFullscreenActive ? exitFullScreen() : enterFullScreen()
   },
-  
+
   enterFullScreen() {
     elements.player.requestFullscreen()
     if (!stretchingModeActive) toggleStretchVideo()
     stretchedFullscreenActive = true
   },
-  
+
   exitFullScreen() {
     document.exitFullscreen()
     if (stretchingModeActive) toggleStretchVideo()
     stretchedFullscreenActive = false
   },
-  
+
   updateFullScreenIcon() {
     elements.fullscreenBtn.textContent = stretchedFullscreenActive
       ? "fullscreen_exit"
       : "fullscreen"
   },
-  
+
   toggleFullScreen() {
     if (document.fullscreenElement) {
       document.exitFullscreen()
@@ -169,9 +179,8 @@ const fullscreenActions = {
         elements.previewBar.style.display = "none"
       }
       stretchedFullscreenActive = false
-    } else 
-      elements.player.requestFullscreen()
-  }
+    } else elements.player.requestFullscreen()
+  },
 }
 
 // Zoom and Stretch Functionality
@@ -187,8 +196,7 @@ function toggleZoom() {
   if (stretchedFullscreenActive) {
     toggleStretchVideo()
     toggleStretchVideo()
-  } else 
-    fullscreenActions.toggleStretchedFullScreen()
+  } else fullscreenActions.toggleStretchedFullScreen()
 }
 
 function toggleZoomCrop() {
@@ -199,19 +207,26 @@ function toggleZoomCrop() {
 
 // Playback Speed Handling
 function updatePlaybackRate() {
-  elements.speedControls.value = parseFloat(elements.speedControls.value).toFixed(2)
+  elements.speedControls.value = parseFloat(
+    elements.speedControls.value
+  ).toFixed(2)
   elements.video.playbackRate = clamp(0.1, elements.speedControls.value, 16)
 }
 
-elements.video.onratechange = () => (speedControls.value = video.playbackRate.toFixed(2))
-elements.speedControls.onchange = speedControls.oninput = updatePlaybackRate
+elements.video.onratechange = () =>
+  (elements.speedControls.value = elements.video.playbackRate.toFixed(2))
+elements.speedControls.onchange = elements.speedControls.oninput =
+  updatePlaybackRate
 
 // ----------------------------- TIME -----------------------------
 elements.video.addEventListener("loadedmetadata", initializeVideo)
 elements.video.addEventListener("timeupdate", updateTimeAndProgress)
-elements.video.addEventListener("emptied", () => (playBtn.textContent = "play_arrow"))
+elements.video.addEventListener(
+  "emptied",
+  () => (elements.playBtn.textContent = "play_arrow")
+)
 elements.progressBar.addEventListener("input", seekVideo)
-elements.progressBar.onfocus = () => progressBar.blur()
+elements.progressBar.onfocus = () => elements.progressBar.blur()
 elements.replayBtn.onclick = replay
 elements.forwardBtn.onclick = forward
 
@@ -229,7 +244,7 @@ const timeUtils = {
       updateProgressBarValue()
       updateIndicators()
     } else console.info("Video metadata not loaded yet.")
-  }
+  },
 }
 
 function initializeVideo() {
@@ -238,17 +253,19 @@ function initializeVideo() {
     : console.info("No video state found in local storage.")
   updateProgressBarValue()
   updateIndicators()
-  elements.duration.textContent = timeUtils.secondsToTime(elements.video.duration)
+  elements.duration.textContent = timeUtils.secondsToTime(
+    elements.video.duration
+  )
 }
 
 function seekVideo() {
-  elements.video.currentTime = 
+  elements.video.currentTime =
     (elements.progressBar.valueAsNumber * elements.video.duration) / 100
   updateIndicators()
 }
 
 function updateProgressBarValue() {
-  elements.progressBar.valueAsNumber = 
+  elements.progressBar.valueAsNumber =
     (elements.video.currentTime * 100) / elements.video.duration
 }
 
@@ -256,36 +273,39 @@ function updateIndicators() {
   const progressBarValue = elements.progressBar.valueAsNumber
   elements.progressBar.style.setProperty("--progress", `${progressBarValue}%`)
   elements.previewBar.style.setProperty("--progress", `${progressBarValue}%`)
-  elements.currentTime.textContent = 
-    timeUtils.secondsToTime(elements.video.currentTime)
-  elements.timeRemaining.textContent = 
-    `-${timeUtils.secondsToTime(elements.video.duration - elements.video.currentTime)}`
+  elements.currentTime.textContent = timeUtils.secondsToTime(
+    elements.video.currentTime
+  )
+  elements.timeRemaining.textContent = `-${timeUtils.secondsToTime(
+    elements.video.duration - elements.video.currentTime
+  )}`
 }
 
 function replay() {
-  elements.video.currentTime = 
-    Math.max(elements.video.currentTime - preferences.timeSkip, 0)
+  elements.video.currentTime = Math.max(
+    elements.video.currentTime - preferences.timeSkip,
+    0
+  )
 }
 
 function forward() {
-  elements.video.currentTime = 
-    Math.min(
-      elements.video.currentTime + preferences.timeSkip, 
-      elements.video.duration
-    )
+  elements.video.currentTime = Math.min(
+    elements.video.currentTime + preferences.timeSkip,
+    elements.video.duration
+  )
 }
 
 // Toggle current time/remaining time
-timeIndicator.addEventListener("click", () => {
-  ;[timeRemaining.hidden, currentTime.hidden] = [
-    currentTime.hidden,
-    timeRemaining.hidden,
+elements.timeIndicator.addEventListener("click", () => {
+  ;[elements.timeRemaining.hidden, elements.currentTime.hidden] = [
+    elements.currentTime.hidden,
+    elements.timeRemaining.hidden,
   ]
 })
 
 // Save time in local storage when window closed/refreshed
 window.onbeforeunload = () => {
-  if (video.src && !video.ended) updateLocalStorage()
+  if (elements.video.src && !elements.video.ended) updateLocalStorage()
 }
 
 // CLEANUP
@@ -299,7 +319,7 @@ Object.keys(localStorage).forEach((key) => {
 })
 console.groupEnd()
 
-video.onended = () => {
+elements.video.onended = () => {
   localStorage.removeItem(localStorageKey)
   console.info("Video ended. Video state deleted from local storage.")
 }
@@ -309,16 +329,16 @@ const videoFeatures = {
   togglePlay() {
     elements.video.paused ? elements.video.play() : elements.video.pause()
   },
-  
+
   toggleMute() {
     elements.video.muted = !elements.video.muted
   },
-  
+
   togglePictureInPicture() {
     document.pictureInPictureElement
       ? document.exitPictureInPicture()
       : elements.video.requestPictureInPicture()
-  }
+  },
 }
 
 // ----------------------------- KEYBOARD SHORTCUTS -----------------------------
@@ -333,117 +353,137 @@ function handleKeyboardShortcuts(e) {
   if (e.key !== " ") document.activeElement.blur()
 
   const keyActions = {
-    " ": () => { // Toggle play
-      if (document.activeElement.tagName !== "BUTTON") videoFeatures.togglePlay()
+    " ": () => {
+      // Toggle play
+      if (document.activeElement.tagName !== "BUTTON")
+        videoFeatures.togglePlay()
     },
-    "g": () => { // Toggle stretched full screen
+    g: () => {
+      // Toggle stretched full screen
       pressedGKey = true
-      if (stretchedFullscreenActive && controls.classList.contains("hidden")) {
+      if (
+        stretchedFullscreenActive &&
+        elements.controls.classList.contains("hidden")
+      ) {
         toggleStretchVideo()
         document.exitFullscreen()
-        if (!controls.classList.contains("hidden")) {
-          controls.classList.add("hidden")
+        if (!elements.controls.classList.contains("hidden")) {
+          elements.controls.classList.add("hidden")
         } else {
-          controls.classList.remove("hidden")
-          previewBar.style.display = "none"
+          elements.controls.classList.remove("hidden")
+          elements.previewBar.style.display = "none"
         }
         stretchedFullscreenActive = false
       } else toggleZoom()
     },
-    "d": () => { // Slow down
+    d: () => {
+      // Slow down
       elements.speedControls.stepDown()
       elements.speedControls.dispatchEvent(new Event("change"))
     },
-    "s": () => { // Speed up
+    s: () => {
+      // Speed up
       elements.speedControls.stepUp()
       elements.speedControls.dispatchEvent(new Event("change"))
     },
-    "ArrowLeft": () => { // Rewind
+    ArrowLeft: () => {
+      // Rewind
       if (document.activeElement.tagName !== "INPUT") replay()
     },
-    "ArrowRight": () => { // Advance
+    ArrowRight: () => {
+      // Advance
       if (document.activeElement.tagName !== "INPUT") forward()
     },
-    "a": () => { // Reset speed
+    a: () => {
+      // Reset speed
       elements.video.playbackRate = elements.video.defaultPlaybackRate
     },
-    "q": () => { // Preferred fast speed
+    q: () => {
+      // Preferred fast speed
       if (elements.video.playbackRate === 1.7) elements.video.playbackRate = 1
       else elements.video.playbackRate = 1.7
     },
-    "w": () => { // Preferred fast speed
+    w: () => {
+      // Preferred fast speed
       if (elements.video.playbackRate === 2) elements.video.playbackRate = 1
       else elements.video.playbackRate = 2
     },
-    "e": () => { // Preferred fast speed
+    e: () => {
+      // Preferred fast speed
       if (elements.video.playbackRate === 2.7) elements.video.playbackRate = 1
       else elements.video.playbackRate = 2.7
     },
-    "t": () => { // Preferred fast speed
+    t: () => {
+      // Preferred fast speed
       if (elements.video.playbackRate === 4) elements.video.playbackRate = 1
       else elements.video.playbackRate = 4
     },
-    "r": () => { // Traverse Speeds
+    r: () => {
+      // Traverse Speeds
       if (elements.video.playbackRate === 3) elements.video.playbackRate = 4
       else elements.video.playbackRate = 3
     },
-    "h": () => { // Hide Playbar/Controls
+    h: () => {
+      // Hide Playbar/Controls
       if (stretchedFullscreenActive) {
-        if (controls.classList.contains("hidden")) {
+        if (elements.controls.classList.contains("hidden")) {
           toggleStretchVideo()
-          if (!controls.classList.contains("hidden")) {
-            controls.classList.add("hidden")
+          if (!elements.controls.classList.contains("hidden")) {
+            elements.controls.classList.add("hidden")
           } else {
-            controls.classList.remove("hidden")
-            previewBar.style.display = "none"
+            elements.controls.classList.remove("hidden")
+            elements.previewBar.style.display = "none"
           }
           toggleStretchVideo()
         } else toggleZoom()
       } else {
-        if (controls.classList.contains("hidden")) {
-          controls.classList.remove("hidden")
-          previewBar.style.display = "none"
+        if (elements.controls.classList.contains("hidden")) {
+          elements.controls.classList.remove("hidden")
+          elements.previewBar.style.display = "none"
         } else {
-          controls.classList.add("hidden")
+          elements.controls.classList.add("hidden")
         }
       }
     },
-    "v": () => { // Show Preview Bar
-      if (controls.classList.contains("hidden")) {
-        if (!previewBar.style.display || previewBar.style.display === "none") {
-          previewBar.style.display = "block"
-        } else {
-          previewBar.style.display = "none"
-        }
+    v: () => {
+      // Show Preview Bar
+      if (elements.controls.classList.contains("hidden")) {
+        if (
+          !elements.previewBar.style.display ||
+          elements.previewBar.style.display === "none"
+        ) {
+          elements.previewBar.style.display = "block"
+        } else elements.previewBar.style.display = "none"
       }
     },
-    "m": toggleMute(), // Toggle mute
-    "c": toggleZoomCrop(), // Toggle zoom
-    "u": toggleStretchVideo(), // Toggle video stretching
-    "p": togglePictureInPicture(), // Toggle PiP
-    "f": () => { // Toggle full screen
-    if (
-      document.activeElement.tagName !== "BUTTON" &&
-      document.activeElement.tagName !== "INPUT"
-    ) {
+    m: toggleMute(), // Toggle mute
+    c: toggleZoomCrop(), // Toggle zoom
+    u: toggleStretchVideo(), // Toggle video stretching
+    p: togglePictureInPicture(), // Toggle PiP
+    f: () => {
+      // Toggle full screen
       if (
-        stretchedFullscreenActive &&
-        controls.classList.contains("hidden")
+        document.activeElement.tagName !== "BUTTON" &&
+        document.activeElement.tagName !== "INPUT"
       ) {
-        toggleStretchVideo()
-        if (!controls.classList.contains("hidden")) {
-          controls.classList.add("hidden")
+        if (
+          stretchedFullscreenActive &&
+          elements.controls.classList.contains("hidden")
+        ) {
+          toggleStretchVideo()
+          if (!elements.controls.classList.contains("hidden")) {
+            elements.controls.classList.add("hidden")
+          } else {
+            elements.controls.classList.remove("hidden")
+            elements.previewBar.style.display = "none"
+          }
+          toggleStretchVideo()
         } else {
-          controls.classList.remove("hidden")
-          previewBar.style.display = "none"
+          pressedGKey = true
+          toggleStretchedFullScreen()
         }
-        toggleStretchVideo()
-      } else {
-        pressedGKey = true
-        toggleStretchedFullScreen()
       }
-    }
-  }
+    },
   }
 
   // Key action execution
@@ -454,11 +494,20 @@ function handleKeyboardShortcuts(e) {
 function handleCtrlStretch(e) {
   if (e.ctrlKey) {
     switch (e.key) {
-      case "ArrowUp": scaleY += 0.01; break
-      case "ArrowDown": scaleY -= 0.01; break
-      case "ArrowRight": scaleX += 0.01; break
-      case "ArrowLeft": scaleX -= 0.01; break
-      default: scaleX = scaleY = 1
+      case "ArrowUp":
+        scaleY += 0.01
+        break
+      case "ArrowDown":
+        scaleY -= 0.01
+        break
+      case "ArrowRight":
+        scaleX += 0.01
+        break
+      case "ArrowLeft":
+        scaleX -= 0.01
+        break
+      default:
+        scaleX = scaleY = 1
     }
     elements.video.style.transform = `scaleX(${scaleX}) scaleY(${scaleY})`
   }
@@ -469,8 +518,8 @@ function handleCtrlStretch(e) {
 function handleVisibilityChange() {
   if (document.visibilityState === "hidden") {
     if (stretchingModeActive) toggleStretchVideo()
-    controls.classList.remove("hidden")
-    previewBar.style.display = "none"
+    elements.controls.classList.remove("hidden")
+    elements.previewBar.style.display = "none"
     stretchedFullscreenActive = false
   }
 }
@@ -478,9 +527,9 @@ function handleVisibilityChange() {
 document.addEventListener("fullscreenchange", () => {
   if (!document.fullscreenElement) {
     if (stretchingModeActive) toggleStretchVideo()
-    if (controls.classList.contains("hidden")) {
-      controls.classList.remove("hidden")
-      previewBar.style.display = "none"
+    if (elements.controls.classList.contains("hidden")) {
+      elements.controls.classList.remove("hidden")
+      elements.previewBar.style.display = "none"
     }
     stretchedFullscreenActive = false
   }
@@ -537,7 +586,8 @@ function captureFrame() {
   return canvas.toDataURL()
 }
 
-video.onloadedmetadata = () => {
+// ----------------------------- VIDEO STRETCHING -----------------------------
+elements.video.onloadedmetadata = () => {
   isVideoReady = true
   if (stretchedFullscreenActive) toggleStretchVideo()
 }
@@ -577,29 +627,29 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "A") {
     isActivated = !isActivated
     if (isActivated) {
-      originalTime = video.currentTime
-      if (!elements.video.paused) video.pause()
-    } else video.currentTime = originalTime
+      originalTime = elements.video.currentTime
+      if (!elements.video.paused) elements.video.pause()
+    } else elements.video.currentTime = originalTime
   }
 })
 
 window.addEventListener("mousemove", (e) => {
   if (!isActivated) return
-  let rect = progressBar.getBoundingClientRect()
+  let rect = elements.progressBar.getBoundingClientRect()
   const percent = (e.clientX - rect.left) / rect.width
   elements.video.currentTime = percent * elements.video.duration
 })
 
-progressBar.addEventListener("click", (e) => {
+elements.progressBar.addEventListener("click", (e) => {
   if (!isActivated) return
   let rect = e.target.getBoundingClientRect()
   const percent = (e.clientX - rect.left) / rect.width
-  originalTime = percent * video.duration
+  originalTime = percent * elements.video.duration
   elements.video.currentTime = originalTime
   isActivated = false
 })
 
-video.addEventListener("play", () => {
+elements.video.addEventListener("play", () => {
   if (isActivated) {
     isActivated = false
     originalTime = elements.video.currentTime
@@ -608,16 +658,13 @@ video.addEventListener("play", () => {
 
 // ----------------------------- PROGRESS BAR SEEKER SMALL -----------------------------
 document.addEventListener("DOMContentLoaded", () => {
-  const videoBar = document.getElementById("video-bar")
-  const seekerPreview = document.getElementById("seeker-preview")
-  const mainVideo = document.getElementById("main-video")
   const previewVideo = document.createElement("video")
 
   let isVideoLoaded = false
   let isSeekerActive = false
   let aspectRatio, seekerWidth
 
-  mainVideo.addEventListener("loadedmetadata", () => {
+  elements.video.addEventListener("loadedmetadata", () => {
     isVideoLoaded = true
     aspectRatio = mainVideo.videoWidth / mainVideo.videoHeight
     seekerWidth = aspectRatio >= 1.77 ? 340 : 260
@@ -627,28 +674,28 @@ document.addEventListener("DOMContentLoaded", () => {
     "keydown",
     (e) => (isSeekerActive = e.key === "a" ? !isSeekerActive : isSeekerActive)
   )
-  mainVideo.addEventListener("play", () => (isSeekerActive = false))
-  videoBar.addEventListener("click", () => (isSeekerActive = false))
+  elements.video.addEventListener("play", () => (isSeekerActive = false))
+  elements.progressBar.addEventListener("click", () => (isSeekerActive = false))
 
-  videoBar.addEventListener("mousemove", (e) => {
+  elements.progressBar.addEventListener("mousemove", (e) => {
     if (!isVideoLoaded || !isSeekerActive) return
 
-    const rect = videoBar.getBoundingClientRect()
+    const rect = elements.progressBar.getBoundingClientRect()
     const percent = (e.clientX - rect.left) / rect.width
-    const previewTime = percent * mainVideo.duration
+    const previewTime = percent * elements.video.duration
     const previewLeft = e.clientX - seekerWidth / 2
 
-    seekerPreview.style.left = `${previewLeft}px`
-    seekerPreview.style.display = "block"
-    previewVideo.src = mainVideo.src
-    previewVideo.currentTime = previewTime
-    seekerPreview.innerHTML = `<div>${formatTime(previewTime)}</div>`
-    seekerPreview.prepend(previewVideo)
+    elements.seekerPreview.style.left = `${previewLeft}px`
+    elements.seekerPreview.style.display = "block"
+    elements.previewVideo.src = elements.video.src
+    elements.previewVideo.currentTime = previewTime
+    elements.seekerPreview.innerHTML = `<div>${formatTime(previewTime)}</div>`
+    elements.seekerPreview.prepend(previewVideo)
   })
 
-  videoBar.addEventListener(
+  elements.progressBar.addEventListener(
     "mouseleave",
-    () => (seekerPreview.style.display = "none")
+    () => (elements.seekerPreview.style.display = "none")
   )
 
   // Format time in M:SS
@@ -666,7 +713,10 @@ function initApp() {
 
   // Event Bindings
   elements.video.addEventListener("timeupdate", timeUtils.updateTimeAndProgress)
-  elements.video.addEventListener("emptied", () => (playBtn.textContent = "play_arrow"))
+  elements.video.addEventListener(
+    "emptied",
+    () => (elements.playBtn.textContent = "play_arrow")
+  )
 }
 
 initApp()

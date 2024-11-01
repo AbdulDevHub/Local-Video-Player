@@ -1,7 +1,7 @@
 "use strict"
 
 // ----------------------------- GLOBAL VARIABLES -----------------------------
-let preferences = { speed: 1.8, timeSkip: 10 }
+let preferences = { timeSkip: 10 }
 let localStorageKey
 let stretchedFullscreenActive = false
 let pressedGKey = false
