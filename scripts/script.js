@@ -83,16 +83,7 @@ async function openFilePicker() {
         {
           description: "Videos",
           accept: {
-            "video/*": [
-              ".avi",
-              ".mp4",
-              ".mpeg",
-              ".ogv",
-              ".ts",
-              ".webm",
-              ".3gp",
-              ".3g2",
-            ],
+            "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
           },
         },
       ],
@@ -106,9 +97,7 @@ async function manageFileHandle(fileHandle) {
   const file = await fileHandle.getFile()
 
   if (video.src) {
-    console.info(
-      "Video change detected, saving old video state in local storage…"
-    )
+    console.info("Video change detected, saving old video state in local storage…")
     updateLocalStorage()
     URL.revokeObjectURL(video.src)
   } else {
@@ -128,9 +117,7 @@ async function manageFileHandle(fileHandle) {
   ;[
     ["seekbackward", replay],
     ["seekforward", forward],
-  ].forEach(([action, handler]) =>
-    navigator.mediaSession.setActionHandler(action, handler)
-  )
+  ].forEach(([action, handler]) => navigator.mediaSession.setActionHandler(action, handler))
 }
 
 function updateMediaSession() {
@@ -161,9 +148,7 @@ function exitFullScreen() {
 }
 
 function updateFullScreenIcon() {
-  fullscreenBtn.textContent = stretchedFullscreenActive
-    ? "fullscreen_exit"
-    : "fullscreen"
+  fullscreenBtn.textContent = stretchedFullscreenActive ? "fullscreen_exit" : "fullscreen"
 }
 
 function toggleFullScreen() {
@@ -219,9 +204,7 @@ forwardBtn.onclick = forward
 
 // Convert seconds to time in format (h:)mm:ss
 function secondsToTime(seconds) {
-  return new Date(seconds * 1000)
-    .toISOString()
-    .substring(seconds >= 3600 ? 12 : 14, 19)
+  return new Date(seconds * 1000).toISOString().substring(seconds >= 3600 ? 12 : 14, 19)
 }
 
 function initializeVideo() {
@@ -237,8 +220,7 @@ function updateTimeAndProgress() {
   if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
     updateProgressBarValue()
     updateIndicators()
-  } else
-    console.info("Video metadata not loaded yet. Skipping timeupdate event.")
+  } else console.info("Video metadata not loaded yet. Skipping timeupdate event.")
 }
 
 function seekVideo() {
@@ -254,9 +236,7 @@ function updateIndicators() {
   progressBar.style.setProperty("--progress", `${progressBar.valueAsNumber}%`)
   previewBar.style.setProperty("--progress", `${progressBar.valueAsNumber}%`)
   currentTime.textContent = secondsToTime(video.currentTime)
-  timeRemaining.textContent = `-${secondsToTime(
-    video.duration - video.currentTime
-  )}`
+  timeRemaining.textContent = `-${secondsToTime(video.duration - video.currentTime)}`
 }
 
 function replay() {
@@ -264,18 +244,12 @@ function replay() {
 }
 
 function forward() {
-  video.currentTime = Math.min(
-    video.currentTime + preferences.timeSkip,
-    video.duration
-  )
+  video.currentTime = Math.min(video.currentTime + preferences.timeSkip, video.duration)
 }
 
 // Toggle current time/remaining time
 timeIndicator.addEventListener("click", () => {
-  ;[timeRemaining.hidden, currentTime.hidden] = [
-    currentTime.hidden,
-    timeRemaining.hidden,
-  ]
+  ;[timeRemaining.hidden, currentTime.hidden] = [currentTime.hidden, timeRemaining.hidden]
 })
 
 // Save time in local storage when window closed/refreshed
@@ -284,9 +258,7 @@ window.onbeforeunload = () => {
 }
 
 // CLEANUP
-console.groupCollapsed(
-  "Saved states of videos last opened more than 30 days ago will be deleted."
-)
+console.groupCollapsed("Saved states of videos last opened more than 30 days ago will be deleted.")
 Object.keys(localStorage).forEach((key) => {
   const entryDate = new Date(JSON.parse(localStorage.getItem(key)).last_opened)
   const isExpired = entryDate < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -422,10 +394,7 @@ document.addEventListener("keydown", (e) => {
         document.activeElement.tagName !== "BUTTON" &&
         document.activeElement.tagName !== "INPUT"
       ) {
-        if (
-          stretchedFullscreenActive &&
-          controls.classList.contains("hidden")
-        ) {
+        if (stretchedFullscreenActive && controls.classList.contains("hidden")) {
           toggleStretchVideo()
           if (!controls.classList.contains("hidden")) {
             controls.classList.add("hidden")
@@ -575,20 +544,11 @@ function captureFrame() {
   const canvas = document.createElement("canvas")
   canvas.width = canvas.height = 512
 
-  const scale = Math.min(
-    canvas.width / video.videoWidth,
-    canvas.height / video.videoHeight
-  )
+  const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight)
   const x = canvas.width / 2 - (video.videoWidth / 2) * scale
   const y = canvas.height / 2 - (video.videoHeight / 2) * scale
   const context = canvas.getContext("2d")
-  context.drawImage(
-    video,
-    x,
-    y,
-    video.videoWidth * scale,
-    video.videoHeight * scale
-  )
+  context.drawImage(video, x, y, video.videoWidth * scale, video.videoHeight * scale)
   return canvas.toDataURL()
 }
 
@@ -666,10 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
     seekerPreview.prepend(previewVideo)
   })
 
-  videoBar.addEventListener(
-    "mouseleave",
-    () => (seekerPreview.style.display = "none")
-  )
+  videoBar.addEventListener("mouseleave", () => (seekerPreview.style.display = "none"))
 
   // Format time in M:SS
   function formatTime(time) {
