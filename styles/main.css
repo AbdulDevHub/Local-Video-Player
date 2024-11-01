@@ -10,9 +10,7 @@
   --hue: 225deg;
   --saturation: 0%;
   --lightness: 96%;
-
   --duration: 0.35s;
-
   --gap: 0.5rem;
 }
 
@@ -39,7 +37,6 @@ body {
   place-content: center;
   place-items: center;
   gap: var(--gap);
-
   font-weight: bold;
   font-size: 2.25rem;
   color: var(--text2);
@@ -50,59 +47,51 @@ body {
     var(--surface3) 75%,
     var(--surface1) 75%
   );
-
   transition: box-shadow var(--duration);
-}
 
-#drag-panel[data-file-hover] {
-  box-shadow: inset 0 0 0.75em 0.25em;
-}
+  &[data-file-hover] {
+    box-shadow: inset 0 0 0.75em 0.25em;
+  }
 
-/* Visible when the window is shrunk */
-#drag-panel > * {
-  margin-inline: 1em;
-  text-align: center;
-}
+  > * {
+    margin-inline: 1em;
+    text-align: center;
+  }
 
-#drag-panel-text {
-  margin-bottom: 0.85em;
-  color: hsl(0deg 2.11% 72.97%);
-}
+  #drag-panel-text {
+    margin-bottom: 0.85em;
+    color: hsl(0deg 2.11% 72.97%);
+  }
 
-#file-picker {
-  max-inline-size: 20em;
+  #file-picker {
+    max-inline-size: 20em;
+    font-size: 0.5em;
+    padding: 0.5em;
+    border-radius: 0.5em;
+    color: hsl(0deg 2.11% 72.97%);
+    background: var(--surface2);
+    box-shadow: 0 0 0.5em
+      hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
+    --spacing: 0.75em;
+    padding-block: calc(var(--spacing) * 0.618);
+    padding-inline: var(--spacing);
+    margin-inline-end: var(--spacing);
+    transition-duration: var(--duration);
+    transition-property: background-color, box-shadow;
 
-  font-size: 0.5em;
-  padding: 0.5em;
-  border-radius: 0.5em;
+    &:hover {
+      background-color: var(--surface1);
+    }
 
-  color: hsl(0deg 2.11% 72.97%);
-  background: var(--surface2);
-  box-shadow: 0 0 0.5em
-    hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
-
-  --spacing: 0.75em;
-  padding-block: calc(var(--spacing) * 0.618);
-  padding-inline: var(--spacing);
-  margin-inline-end: var(--spacing);
-
-  transition-duration: var(--duration);
-  transition-property: background-color, box-shadow;
-}
-
-#file-picker:hover {
-  background-color: var(--surface1);
-}
-
-#file-picker:active {
-  box-shadow: none;
+    &:active {
+      box-shadow: none;
+    }
+  }
 }
 
 .player {
   display: flex;
   flex-direction: column;
-
-  /* This can be seen when a file is hovering over a video */
   background-image: radial-gradient(var(--surface4), var(--surface3));
 }
 
@@ -110,7 +99,6 @@ body {
   flex: 1;
   min-block-size: 0;
   background-color: var(--surface2);
-
   transition-duration: var(--duration);
   transition-property: scale, border-radius, border;
 }
@@ -123,14 +111,11 @@ body {
 
 .controls {
   --spacing: 0.75rem;
-
   position: relative;
-
   display: flex;
   align-items: center;
   gap: var(--gap);
   padding: var(--spacing);
-
   color: var(--text2);
   background-color: var(--surface2);
 }
@@ -263,7 +248,6 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
 #file-name-container {
   display: inline-flex;
   place-items: center;
-
   min-inline-size: 6ch;
 }
 
@@ -280,21 +264,16 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
 }
 
 #speed-controls {
-  /* Push to the right */
   margin-inline-start: auto;
-
   text-align: center;
-
   border: thin solid var(--surface4);
   border-radius: 1.25rem;
-
   --text-size: 5em;
   --buttons-size: 1em;
   inline-size: var(--text-size);
   padding-inline: var(--spacing);
   box-shadow: inset 0 0 0.25em
     hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
-
   transition: var(--duration);
   transition-property: inline-size, width;
 }
@@ -302,7 +281,6 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
 #speed-controls::-webkit-inner-spin-button {
   transition-duration: var(--duration);
   transition-property: margin, opacity;
-
   opacity: 0;
   margin-inline-start: calc(-1 * var(--buttons-size));
 }
@@ -319,26 +297,26 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
 .stretchClass {
   transform-origin: top left;
   transform: scaleX(1) scaleY(1) !important; /* Original size */
-}
 
-.stretchClass.mode-2 {
-  transform-origin: top center;
-  transform: scaleX(1.2) scaleY(1) !important; /* 4:3 complete fullscreen mode */
-}
-
-.stretchClass.mode-1 {
-  transform-origin: center left;
-  transform: scaleX(1) scaleY(1.11) !important; /* 16:9 complete fullscreen mode */
-}
-
-.stretchClass.fullscreen-mode-2 {
-  transform-origin: top center;
-  transform: scaleX(1.291) scaleY(1) !important; /* 4:3 partial fullscreen mode*/
-}
-
-.stretchClass.fullscreen-mode-1 {
-  transform-origin: center left;
-  transform: scaleX(1) scaleY(1.027) !important; /* 16:9 partial fullscreen mode*/
+  &.mode-2 {
+    transform-origin: top center;
+    transform: scaleX(1.2) scaleY(1) !important; /* 4:3 complete fullscreen mode */
+  }
+  
+  &.mode-1 {
+    transform-origin: center left;
+    transform: scaleX(1) scaleY(1.11) !important; /* 16:9 complete fullscreen mode */
+  }
+  
+  &.fullscreen-mode-2 {
+    transform-origin: top center;
+    transform: scaleX(1.291) scaleY(1) !important; /* 4:3 partial fullscreen mode*/
+  }
+  
+  &.fullscreen-mode-1 {
+    transform-origin: center left;
+    transform: scaleX(1) scaleY(1.027) !important; /* 16:9 partial fullscreen mode*/
+  }
 }
 
 #seeker-preview {
@@ -352,17 +330,17 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
   box-sizing: border-box;
   color: white;
   text-align: center;
-}
 
-#seeker-preview video {
-  width: auto;
-  height: 100%;
-}
+  video {
+    width: auto;
+    height: 100%;
+  }
 
-#seeker-preview div {
-  position: absolute;
-  bottom: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 14px;
+  div {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+  }
 }
