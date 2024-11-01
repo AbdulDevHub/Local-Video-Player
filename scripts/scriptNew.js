@@ -508,32 +508,67 @@ const fileManagement = {
   },
 }
 
-// Zoom and Stretch Functionality
-elements.zoomBtn.onclick = toggleZoom
+// ------------------------------ All of the code below needs to be cleaned up ------------------------------
+// ----------------------------- ZOOM CONTROLS -----------------------------
+const zoomControls = {
+  toggle() {
+    this.toggleControls()
+    if (state.stretchedFullscreenActive) {
+      videoStretching.toggle()
+      videoStretching.toggle()
+    } else videoStretching.toggleStretchedFullscreen()
+  },
 
-function toggleZoom() {
-  if (!elements.controls.classList.contains("hidden")) {
-    elements.controls.classList.add("hidden")
-  } else {
-    elements.controls.classList.remove("hidden")
-    elements.previewBar.style.display = "none"
-  }
-  if (state.stretchedFullscreenActive) {
-    videoStretching.toggle()
-    videoStretching.toggle()
-  } else videoStretching.toggleStretchedFullscreen()
+  toggleControls() {
+    if (!elements.controls.classList.contains("hidden")) {
+      elements.controls.classList.add("hidden")
+    } else {
+      elements.controls.classList.remove("hidden")
+      elements.previewBar.style.display = "none"
+    }
+  },
+
+  toggleCrop() {
+    const isZoomedIn = elements.zoomBtn.textContent === "zoom_out_map"
+    elements.video.style.objectFit = isZoomedIn ? "cover" : "contain"
+    elements.zoomBtn.textContent = isZoomedIn ? "crop_free" : "zoom_out_map"
+  },
 }
 
-function toggleZoomCrop() {
-  const isZoomedIn = elements.zoomBtn.textContent === "zoom_out_map"
-  elements.video.style.objectFit = isZoomedIn ? "cover" : "contain"
-  elements.zoomBtn.textContent = isZoomedIn ? "crop_free" : "zoom_out_map"
-}
+// ----------------------------- SEEK CONTROLS -----------------------------
+const seekerControls = {
+  seek() {
+    elements.video.currentTime =
+      (elements.progressBar.valueAsNumber * elements.video.duration) / 100
+    videoControls.updateIndicators()
+  },
 
-function seekVideo() {
-  elements.video.currentTime =
-    (elements.progressBar.valueAsNumber * elements.video.duration) / 100
-  videoControls.updateIndicators()
+  handleGiantSeeker(e) {
+    if (!state.isGiantSeekerActive) return
+    const rect = elements.progressBar.getBoundingClientRect()
+    const percent = (e.clientX - rect.left) / rect.width
+    elements.video.currentTime = percent * elements.video.duration
+  },
+
+  handleSmallSeeker(e) {
+    if (!state.isVideoLoaded || !state.isSmallSeekerActive) return
+
+    const rect = elements.progressBar.getBoundingClientRect()
+    const percent = (e.clientX - rect.left) / rect.width
+    const previewTime = percent * elements.video.duration
+    const previewLeft = e.clientX - state.seekerWidth / 2
+
+    this.updateSeekerPreview(previewLeft, previewTime)
+  },
+
+  updateSeekerPreview(left, time) {
+    elements.seekerPreview.style.left = `${left}px`
+    elements.seekerPreview.style.display = "block"
+    elements.previewVideo.src = elements.video.src
+    elements.previewVideo.currentTime = time
+    elements.seekerPreview.innerHTML = `<div>${utils.formatTime(time)}</div>`
+    elements.seekerPreview.prepend(elements.previewVideo)
+  },
 }
 
 // ----------------------------- INITIALIZATION -----------------------------
@@ -544,6 +579,64 @@ function initializeVideo() {
   videoControls.updateProgressBarValue()
   videoControls.updateIndicators()
   elements.duration.textContent = utils.secondsToTime(elements.video.duration)
+}
+
+function initializeZoomEvents() {
+  elements.zoomBtn.onclick = () => zoomControls.toggle()
+}
+
+function initializeSeekerEvents() {
+  elements.progressBar.addEventListener("input", seekerControls.seek)
+  elements.progressBar.onfocus = () => elements.progressBar.blur()
+
+  // Giant seeker events
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "A") {
+      state.isGiantSeekerActive = !state.isGiantSeekerActive
+      if (state.isGiantSeekerActive) {
+        state.originalTime = elements.video.currentTime
+        if (!elements.video.paused) elements.video.pause()
+      } else {
+        elements.video.currentTime = state.originalTime
+      }
+    }
+  })
+
+  window.addEventListener("mousemove", (e) => seekerControls.handleGiantSeeker(e))
+
+  elements.progressBar.addEventListener("click", (e) => {
+    if (!state.isGiantSeekerActive) return
+    const rect = e.target.getBoundingClientRect()
+    const percent = (e.clientX - rect.left) / rect.width
+    state.originalTime = percent * elements.video.duration
+    elements.video.currentTime = state.originalTime
+    state.isGiantSeekerActive = false
+  })
+
+  elements.video.addEventListener("play", () => {
+    if (state.isGiantSeekerActive) {
+      state.isGiantSeekerActive = false
+      state.originalTime = elements.video.currentTime
+    }
+  })
+
+  // Small seeker events
+  elements.video.addEventListener("loadedmetadata", () => {
+    state.isVideoLoaded = true
+    state.aspectRatio = elements.video.videoWidth / elements.video.videoHeight
+    state.seekerWidth = state.aspectRatio >= 1.77 ? 340 : 260
+  })
+
+  document.addEventListener("keydown", (e) => {
+    state.isSmallSeekerActive = e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
+  })
+
+  elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
+  elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
+  elements.progressBar.addEventListener("mousemove", (e) => seekerControls.handleSmallSeeker(e))
+  elements.progressBar.addEventListener("mouseleave", () => {
+    elements.seekerPreview.style.display = "none"
+  })
 }
 
 function initializeEventListeners() {
@@ -570,8 +663,6 @@ function initializeEventListeners() {
   elements.video.addEventListener("loadedmetadata", initializeVideo)
   elements.video.addEventListener("timeupdate", updateTimeAndProgress)
   elements.video.addEventListener("emptied", () => (elements.playBtn.textContent = "play_arrow"))
-  elements.progressBar.addEventListener("input", seekVideo)
-  elements.progressBar.onfocus = () => elements.progressBar.blur()
   elements.rewindBtn.onclick = videoControls.rewind
   elements.forwardBtn.onclick = videoControls.forward
 
@@ -620,82 +711,12 @@ function initializeEventListeners() {
     state.isVideoReady = true
     if (state.stretchedFullscreenActive) videoStretching.toggle()
   }
-
-  // ----------------------------- PROGRESS BAR SEEKER GIANT -----------------------------
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "A") {
-      state.isGiantSeekerActive = !state.isGiantSeekerActive
-      if (state.isGiantSeekerActive) {
-        state.originalTime = elements.video.currentTime
-        if (!elements.video.paused) elements.video.pause()
-      } else elements.video.currentTime = state.originalTime
-    }
-  })
-
-  window.addEventListener("mousemove", (e) => {
-    if (!state.isGiantSeekerActive) return
-    let rect = elements.progressBar.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    elements.video.currentTime = percent * elements.video.duration
-  })
-
-  elements.progressBar.addEventListener("click", (e) => {
-    if (!state.isGiantSeekerActive) return
-    let rect = e.target.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    state.originalTime = percent * elements.video.duration
-    elements.video.currentTime = state.originalTime
-    state.isGiantSeekerActive = false
-  })
-
-  elements.video.addEventListener("play", () => {
-    if (state.isGiantSeekerActive) {
-      state.isGiantSeekerActive = false
-      state.originalTime = elements.video.currentTime
-    }
-  })
-
-  // ----------------------------- PROGRESS BAR SEEKER SMALL -----------------------------
-  elements.video.addEventListener("loadedmetadata", () => {
-    state.isVideoLoaded = true
-    state.aspectRatio = elements.video.videoWidth / elements.video.videoHeight
-    state.seekerWidth = state.aspectRatio >= 1.77 ? 340 : 260
-  })
-
-  document.addEventListener(
-    "keydown",
-    (e) =>
-      (state.isSmallSeekerActive =
-        e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive)
-  )
-  elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
-  elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
-
-  elements.progressBar.addEventListener("mousemove", (e) => {
-    if (!state.isVideoLoaded || !state.isSmallSeekerActive) return
-
-    const rect = elements.progressBar.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    const previewTime = percent * elements.video.duration
-    const previewLeft = e.clientX - state.seekerWidth / 2
-
-    elements.seekerPreview.style.left = `${previewLeft}px`
-    elements.seekerPreview.style.display = "block"
-    elements.previewVideo.src = elements.video.src
-    elements.previewVideo.currentTime = previewTime
-    elements.seekerPreview.innerHTML = `<div>${utils.formatTime(previewTime)}</div>`
-    elements.seekerPreview.prepend(previewVideo)
-  })
-
-  elements.progressBar.addEventListener(
-    "mouseleave",
-    () => (elements.seekerPreview.style.display = "none")
-  )
 }
 
-// ----------------------------- INITIALIZATION -----------------------------
 function initializeApp() {
   initializeEventListeners()
+  initializeZoomEvents()
+  initializeSeekerEvents()
 }
 
 // Start the application
