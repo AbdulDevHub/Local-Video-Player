@@ -1,8 +1,8 @@
 "use strict"
 
 // ----------------------------- GLOBAL VARIABLES -----------------------------
+const preferences = { timeSkip: 10 }
 const state = {
-  preferences: { timeSkip: 10 },
   localStorageKey: null,
   stretchedFullscreenActive: false,
   pressedGKey: false,
@@ -91,20 +91,19 @@ const utils = {
 // ----------------------------- LOCAL STORAGE MANAGEMENT -----------------------------
 const storage = {
   save() {
-    if (!elements.video.src || elements.video.ended) return
-    const state = {
+    const videoState = {
       timer: elements.video.currentTime,
       playbackRate: elements.video.playbackRate,
       last_opened: Date.now(),
     }
-    localStorage.setItem(state.localStorageKey, JSON.stringify(state))
+    localStorage.setItem(state.localStorageKey, JSON.stringify(videoState))
     console.info("Video state saved in local storage.")
   },
 
   restore() {
-    const state = JSON.parse(localStorage.getItem(state.localStorageKey))
-    elements.video.currentTime = state.timer
-    elements.video.playbackRate = state.playbackRate
+    let videoState = JSON.parse(localStorage.getItem(state.localStorageKey))
+    elements.video.currentTime = videoState.timer
+    elements.video.playbackRate = videoState.playbackRate
     console.info("Video state restored from local storage.")
   },
 
@@ -140,15 +139,12 @@ const videoControls = {
   },
 
   rewind() {
-    elements.video.currentTime = Math.max(
-      elements.video.currentTime - state.preferences.timeSkip,
-      0
-    )
+    elements.video.currentTime = Math.max(elements.video.currentTime - preferences.timeSkip, 0)
   },
 
   forward() {
     elements.video.currentTime = Math.min(
-      elements.video.currentTime + state.preferences.timeSkip,
+      elements.video.currentTime + preferences.timeSkip,
       elements.video.duration
     )
   },
@@ -160,23 +156,18 @@ const videoControls = {
 
   updateTimeAndProgress() {
     if (elements.video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-      this.updateProgressBarValue()
-      this.updateIndicators()
+      videoControls.updateProgressBarValue()
+      videoControls.updateIndicators()
     } else console.info("Video metadata not loaded yet.")
   },
 
   updateIndicators() {
-    this.updateProgressBarValue()
-    this.updateTimeDisplay()
-  },
-
-  updateProgressBar() {
+    // Update Progress Bar
     const progressBarValue = elements.progressBar.valueAsNumber
     elements.progressBar.style.setProperty("--progress", `${progressBarValue}%`)
     elements.previewBar.style.setProperty("--progress", `${progressBarValue}%`)
-  },
 
-  updateTimeDisplay() {
+    // Update Time Display
     elements.currentTime.textContent = utils.secondsToTime(elements.video.currentTime)
     elements.timeRemaining.textContent = `-${utils.secondsToTime(
       elements.video.duration - elements.video.currentTime
@@ -230,7 +221,7 @@ const videoStretching = {
   toggle() {
     if (!state.isVideoReady) return
 
-    const mode = this.getStretchMode()
+    const mode = videoStretching.getStretchMode()
     if (!state.stretchingModeActive) {
       state.stretchingModeActive = true
       elements.video.classList.add("stretchClass", mode)
@@ -249,10 +240,10 @@ const videoStretching = {
   async toggleStretchedFullscreen() {
     if (state.stretchedFullscreenActive) {
       await document.exitFullscreen()
-      if (state.stretchingModeActive) this.toggle()
+      if (state.stretchingModeActive) videoStretching.toggle()
     } else {
       await elements.player.requestFullscreen()
-      if (!state.stretchingModeActive) this.toggle()
+      if (!state.stretchingModeActive) videoStretching.toggle()
     }
     state.stretchedFullscreenActive = !state.stretchedFullscreenActive
   },
@@ -370,10 +361,10 @@ const eventHandlers = {
           } else elements.previewBar.style.display = "none"
         }
       },
-      m: videoControls.toggleMute(), // Toggle mute
-      c: zoomControls.toggleCrop(), // Toggle zoom
-      u: videoStretching.toggle(), // Toggle video stretching
-      p: videoControls.togglePictureInPicture(), // Toggle PiP
+      m: videoControls.toggleMute, // Toggle mute
+      c: zoomControls.toggleCrop, // Toggle zoom
+      u: videoStretching.toggle, // Toggle video stretching
+      p: videoControls.togglePictureInPicture, // Toggle PiP
       f: () => {
         // Toggle full screen
         if (
@@ -398,7 +389,7 @@ const eventHandlers = {
     }
 
     // Key action execution
-    const action = keyActions[e.key.toLowerCase()]
+    const action = keyActions[e.key.length === 1 ? e.key.toLowerCase() : e.key]
     if (action) action()
   },
 
@@ -418,7 +409,7 @@ const eventHandlers = {
           state.scaleX -= 0.01
           break
         default:
-          state.scaleX = scaleY = 1
+          state.scaleX = state.scaleY = 1
       }
       elements.video.style.transform = `scaleX(${state.scaleX}) scaleY(${state.scaleY})`
     }
@@ -454,7 +445,7 @@ const fileManagement = {
     elements.video.src = URL.createObjectURL(file)
     elements.fileName.textContent = file.name.replace(/\.[^.]+$/, "")
 
-    this.updateMediaSession()
+    fileManagement.updateMediaSession()
   },
 
   updateMediaSession() {
@@ -490,28 +481,26 @@ const fileManagement = {
   },
 
   async openFilePicker() {
-    try {
-      const [fileHandle] = await window.showOpenFilePicker({
-        excludeAcceptAllOption: true,
-        types: [
-          {
-            description: "Videos",
-            accept: {
-              "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
-            },
+    const [fileHandle] = await window.showOpenFilePicker({
+      excludeAcceptAllOption: true,
+      types: [
+        {
+          description: "Videos",
+          accept: {
+            "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
           },
-        ],
-        multiple: false,
-      })
-      this.processFile(fileHandle)
-    } catch {}
+        },
+      ],
+      multiple: false,
+    })
+    fileManagement.processFile(fileHandle)
   },
 }
 
 // ----------------------------- ZOOM CONTROLS -----------------------------
 const zoomControls = {
   toggle() {
-    this.toggleControls()
+    zoomControls.toggleControls()
     if (state.stretchedFullscreenActive) {
       videoStretching.toggle()
       videoStretching.toggle()
@@ -557,7 +546,7 @@ const seekerControls = {
     const previewTime = percent * elements.video.duration
     const previewLeft = e.clientX - state.seekerWidth / 2
 
-    this.updateSeekerPreview(previewLeft, previewTime)
+    seekerControls.updateSeekerPreview(previewLeft, previewTime)
   },
 
   updateSeekerPreview(left, time) {
@@ -631,7 +620,7 @@ function initializeEventListeners() {
   elements.video.onpause = () => (elements.playBtn.textContent = "play_arrow")
   elements.video.onplay = () => (elements.playBtn.textContent = "pause")
   elements.fullscreenBtn.onclick = videoStretching.toggleStretchedFullscreen
-  document.onfullscreenchange = updateFullScreenIcon
+  document.onfullscreenchange = fullscreenHandler.updateIcon
   elements.video.addEventListener("dblclick", fullscreenHandler.toggle)
   elements.timeIndicator.addEventListener("click", () => {
     // Toggle current time/remaining time
@@ -668,9 +657,6 @@ function initializeEventListeners() {
     console.info("Video ended. Video state deleted from local storage.")
   }
 
-  // ============= ZOOM CONTROLS EVENTS =============
-  elements.zoomBtn.onclick = () => zoomControls.toggle
-
   // ============= SEEKER CONTROLS EVENTS =============
   elements.progressBar.addEventListener("input", seekerControls.seek)
   elements.progressBar.onfocus = () => elements.progressBar.blur()
@@ -696,10 +682,12 @@ function initializeEventListeners() {
 
   // ============= PLAYBACK RATE EVENTS =============
   elements.video.addEventListener("loadedmetadata", initializeVideo)
-  elements.video.addEventListener("timeupdate", updateTimeAndProgress)
+  elements.video.addEventListener("timeupdate", videoControls.updateTimeAndProgress)
   elements.video.addEventListener("emptied", () => (elements.playBtn.textContent = "play_arrow"))
   elements.rewindBtn.onclick = videoControls.rewind
   elements.forwardBtn.onclick = videoControls.forward
+  elements.zoomBtn.onclick = zoomControls.toggle
+
   elements.video.onratechange = () =>
     (elements.speedControls.value = elements.video.playbackRate.toFixed(2))
   elements.speedControls.onchange = elements.speedControls.oninput =
