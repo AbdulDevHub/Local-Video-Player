@@ -62,6 +62,7 @@ The following keyboard shortcuts are supported:
 |                <kbd>CTRL + ↑→↓← </kbd>                 | Strech video ↑→↓← slightly         |
 |                      <kbd>A</kbd>                      | Toggle giant video seeker mode     |
 |                      <kbd>a</kbd>                      | Toggle small video seeker mode     |
+|                      <kbd>V</kbd>                      | Toggle preview bar                 |
 
 ## Contributing
 
