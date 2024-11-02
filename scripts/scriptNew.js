@@ -291,7 +291,7 @@ const eventHandlers = {
             elements.previewBar.style.display = "none"
           }
           state.stretchedFullscreenActive = false
-        } else toggleZoom()
+        } else zoomControls.toggle()
       },
       d: () => {
         // Slow down
@@ -352,7 +352,7 @@ const eventHandlers = {
               elements.previewBar.style.display = "none"
             }
             videoStretching.toggle()
-          } else toggleZoom()
+          } else zoomControls.toggle()
         } else {
           if (elements.controls.classList.contains("hidden")) {
             elements.controls.classList.remove("hidden")
@@ -371,7 +371,7 @@ const eventHandlers = {
         }
       },
       m: videoControls.toggleMute(), // Toggle mute
-      c: toggleZoomCrop(), // Toggle zoom
+      c: zoomControls.toggleCrop(), // Toggle zoom
       u: videoStretching.toggle(), // Toggle video stretching
       p: videoControls.togglePictureInPicture(), // Toggle PiP
       f: () => {
@@ -508,7 +508,6 @@ const fileManagement = {
   },
 }
 
-// ------------------------------ All of the code below needs to be cleaned up ------------------------------
 // ----------------------------- ZOOM CONTROLS -----------------------------
 const zoomControls = {
   toggle() {
@@ -569,6 +568,42 @@ const seekerControls = {
     elements.seekerPreview.innerHTML = `<div>${utils.formatTime(time)}</div>`
     elements.seekerPreview.prepend(elements.previewVideo)
   },
+
+  toggleGiantSeeker(e) {
+    if (e.key === "A") {
+      state.isGiantSeekerActive = !state.isGiantSeekerActive
+
+      if (state.isGiantSeekerActive) {
+        state.originalTime = elements.video.currentTime
+        if (!elements.video.paused) elements.video.pause()
+      } else {
+        elements.video.currentTime = state.originalTime
+      }
+    }
+  },
+
+  updateTimeOnGiantSeekerClick(e) {
+    if (!state.isGiantSeekerActive) return
+
+    const rect = e.target.getBoundingClientRect()
+    const percent = (e.clientX - rect.left) / rect.width
+    state.originalTime = percent * elements.video.duration
+    elements.video.currentTime = state.originalTime
+    state.isGiantSeekerActive = false
+  },
+
+  resetGiantSeekerOnPlay() {
+    if (state.isGiantSeekerActive) {
+      state.isGiantSeekerActive = false
+      state.originalTime = elements.video.currentTime
+    }
+  },
+
+  setVideoProperties() {
+    state.isVideoLoaded = true
+    state.aspectRatio = elements.video.videoWidth / elements.video.videoHeight
+    state.seekerWidth = state.aspectRatio >= 1.77 ? 340 : 260
+  },
 }
 
 // ----------------------------- INITIALIZATION -----------------------------
@@ -581,66 +616,8 @@ function initializeVideo() {
   elements.duration.textContent = utils.secondsToTime(elements.video.duration)
 }
 
-function initializeZoomEvents() {
-  elements.zoomBtn.onclick = () => zoomControls.toggle()
-}
-
-function initializeSeekerEvents() {
-  elements.progressBar.addEventListener("input", seekerControls.seek)
-  elements.progressBar.onfocus = () => elements.progressBar.blur()
-
-  // Giant seeker events
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "A") {
-      state.isGiantSeekerActive = !state.isGiantSeekerActive
-      if (state.isGiantSeekerActive) {
-        state.originalTime = elements.video.currentTime
-        if (!elements.video.paused) elements.video.pause()
-      } else {
-        elements.video.currentTime = state.originalTime
-      }
-    }
-  })
-
-  window.addEventListener("mousemove", (e) => seekerControls.handleGiantSeeker(e))
-
-  elements.progressBar.addEventListener("click", (e) => {
-    if (!state.isGiantSeekerActive) return
-    const rect = e.target.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    state.originalTime = percent * elements.video.duration
-    elements.video.currentTime = state.originalTime
-    state.isGiantSeekerActive = false
-  })
-
-  elements.video.addEventListener("play", () => {
-    if (state.isGiantSeekerActive) {
-      state.isGiantSeekerActive = false
-      state.originalTime = elements.video.currentTime
-    }
-  })
-
-  // Small seeker events
-  elements.video.addEventListener("loadedmetadata", () => {
-    state.isVideoLoaded = true
-    state.aspectRatio = elements.video.videoWidth / elements.video.videoHeight
-    state.seekerWidth = state.aspectRatio >= 1.77 ? 340 : 260
-  })
-
-  document.addEventListener("keydown", (e) => {
-    state.isSmallSeekerActive = e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
-  })
-
-  elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
-  elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
-  elements.progressBar.addEventListener("mousemove", (e) => seekerControls.handleSmallSeeker(e))
-  elements.progressBar.addEventListener("mouseleave", () => {
-    elements.seekerPreview.style.display = "none"
-  })
-}
-
 function initializeEventListeners() {
-  // File handling events
+  // ============= FILE HANDLING EVENTS =============
   elements.droppableElements.forEach((droppable) => {
     droppable.addEventListener("dragenter", fileManagement.handleDragEnter)
   })
@@ -649,31 +626,25 @@ function initializeEventListeners() {
   elements.dropOverlay.addEventListener("dragleave", fileManagement.handleDragEnd)
   elements.filePicker.addEventListener("click", fileManagement.openFilePicker)
 
-  // Video control events
+  // ============= VIDEO CONTROL EVENTS =============
   elements.playBtn.onclick = elements.video.onclick = videoControls.togglePlay
   elements.video.onpause = () => (elements.playBtn.textContent = "play_arrow")
   elements.video.onplay = () => (elements.playBtn.textContent = "pause")
-
   elements.fullscreenBtn.onclick = videoStretching.toggleStretchedFullscreen
   document.onfullscreenchange = updateFullScreenIcon
   elements.video.addEventListener("dblclick", fullscreenHandler.toggle)
-
-  document.addEventListener("visibilitychange", eventHandlers.handleVisibilityChange)
-
-  elements.video.addEventListener("loadedmetadata", initializeVideo)
-  elements.video.addEventListener("timeupdate", updateTimeAndProgress)
-  elements.video.addEventListener("emptied", () => (elements.playBtn.textContent = "play_arrow"))
-  elements.rewindBtn.onclick = videoControls.rewind
-  elements.forwardBtn.onclick = videoControls.forward
-
-  // Toggle current time/remaining time
   elements.timeIndicator.addEventListener("click", () => {
+    // Toggle current time/remaining time
     ;[elements.timeRemaining.hidden, elements.currentTime.hidden] = [
       elements.currentTime.hidden,
       elements.timeRemaining.hidden,
     ]
   })
 
+  // ============= WINDOW EVENTS =============
+  document.addEventListener("visibilitychange", eventHandlers.handleVisibilityChange)
+  document.addEventListener("keydown", eventHandlers.handleKeyboardShortcuts)
+  document.addEventListener("keydown", eventHandlers.handleCtrlStretch)
   document.addEventListener("fullscreenchange", () => {
     if (!document.fullscreenElement) {
       if (state.stretchingModeActive) videoStretching.toggle()
@@ -685,39 +656,58 @@ function initializeEventListeners() {
     }
   })
 
-  document.addEventListener("keydown", eventHandlers.handleKeyboardShortcuts)
-  document.addEventListener("keydown", eventHandlers.handleCtrlStretch)
-
-  elements.video.addEventListener("timeupdate", timeUtils.updateTimeAndProgress)
-  elements.video.addEventListener("emptied", () => (elements.playBtn.textContent = "play_arrow"))
-
-  elements.video.onratechange = () =>
-    (elements.speedControls.value = elements.video.playbackRate.toFixed(2))
-  elements.speedControls.onchange = elements.speedControls.oninput =
-    videoControls.updatePlaybackRate
-
-  // Save time in local storage when window closed/refreshed
+  // Save video progress in local storage before unloading the page
   window.onbeforeunload = () => {
     if (elements.video.src && !elements.video.ended) storage.save()
   }
   storage.cleanup()
 
+  // Remove video state from local storage upon video end
   elements.video.onended = () => {
     localStorage.removeItem(state.localStorageKey)
     console.info("Video ended. Video state deleted from local storage.")
   }
 
+  // ============= ZOOM CONTROLS EVENTS =============
+  elements.zoomBtn.onclick = () => zoomControls.toggle
+
+  // ============= SEEKER CONTROLS EVENTS =============
+  elements.progressBar.addEventListener("input", seekerControls.seek)
+  elements.progressBar.onfocus = () => elements.progressBar.blur()
+
+  // Giant seeker events
+  window.addEventListener("keydown", seekerControls.toggleGiantSeeker)
+  window.addEventListener("mousemove", (e) => seekerControls.handleGiantSeeker(e))
+  elements.progressBar.addEventListener("click", seekerControls.updateTimeOnGiantSeekerClick)
+  elements.video.addEventListener("play", seekerControls.resetGiantSeekerOnPlay)
+
+  // Small seeker events
+  elements.video.addEventListener("loadedmetadata", seekerControls.setVideoProperties)
+  document.addEventListener("keydown", (e) => {
+    state.isSmallSeekerActive =
+      e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
+  })
+  elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
+  elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
+  elements.progressBar.addEventListener("mousemove", (e) => seekerControls.handleSmallSeeker(e))
+  elements.progressBar.addEventListener("mouseleave", () => {
+    elements.seekerPreview.style.display = "none"
+  })
+
+  // ============= PLAYBACK RATE EVENTS =============
+  elements.video.addEventListener("loadedmetadata", initializeVideo)
+  elements.video.addEventListener("timeupdate", updateTimeAndProgress)
+  elements.video.addEventListener("emptied", () => (elements.playBtn.textContent = "play_arrow"))
+  elements.rewindBtn.onclick = videoControls.rewind
+  elements.forwardBtn.onclick = videoControls.forward
+  elements.video.onratechange = () =>
+    (elements.speedControls.value = elements.video.playbackRate.toFixed(2))
+  elements.speedControls.onchange = elements.speedControls.oninput =
+    videoControls.updatePlaybackRate
   elements.video.onloadedmetadata = () => {
     state.isVideoReady = true
     if (state.stretchedFullscreenActive) videoStretching.toggle()
   }
 }
 
-function initializeApp() {
-  initializeEventListeners()
-  initializeZoomEvents()
-  initializeSeekerEvents()
-}
-
-// Start the application
-initializeApp()
+initializeEventListeners()
