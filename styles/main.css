@@ -70,8 +70,7 @@ body {
     border-radius: 0.5em;
     color: hsl(0deg 2.11% 72.97%);
     background: var(--surface2);
-    box-shadow: 0 0 0.5em
-      hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
+    box-shadow: 0 0 0.5em hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
     --spacing: 0.75em;
     padding-block: calc(var(--spacing) * 0.618);
     padding-inline: var(--spacing);
@@ -126,8 +125,7 @@ body {
 
 .controls button {
   transition: var(--duration);
-  transition-property: color, background-color, box-shadow,
-    font-variation-settings;
+  transition-property: color, background-color, box-shadow, font-variation-settings;
 }
 
 .controls button:is(:hover, :focus-visible) {
@@ -231,8 +229,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
   margin: 0;
-  box-shadow: 0 0 0 0.5em
-    hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
+  box-shadow: 0 0 0 0.5em hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
 }
 
 #time-indicator {
@@ -272,8 +269,7 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
   --buttons-size: 1em;
   inline-size: var(--text-size);
   padding-inline: var(--spacing);
-  box-shadow: inset 0 0 0.25em
-    hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
+  box-shadow: inset 0 0 0.25em hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
   transition: var(--duration);
   transition-property: inline-size, width;
 }
@@ -302,17 +298,17 @@ input[type="range"]::-webkit-slider-thumb:is(:hover, :focus-visible) {
     transform-origin: top center;
     transform: scaleX(1.2) scaleY(1) !important; /* 4:3 complete fullscreen mode */
   }
-  
+
   &.mode-1 {
     transform-origin: center left;
     transform: scaleX(1) scaleY(1.11) !important; /* 16:9 complete fullscreen mode */
   }
-  
+
   &.fullscreen-mode-2 {
     transform-origin: top center;
     transform: scaleX(1.291) scaleY(1) !important; /* 4:3 partial fullscreen mode*/
   }
-  
+
   &.fullscreen-mode-1 {
     transform-origin: center left;
     transform: scaleX(1) scaleY(1.027) !important; /* 16:9 partial fullscreen mode*/

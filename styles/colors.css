@@ -14,9 +14,7 @@
   --shadow-strength-light: 2%;
 
   /* Dark theme */
-  --dark: hsl(
-    var(--hue) calc(var(--saturation) / 2) calc(var(--lightness) / 1.5)
-  );
+  --dark: hsl(var(--hue) calc(var(--saturation) / 2) calc(var(--lightness) / 1.5));
 
   --text1-dark: hsl(var(--hue) 15% 85%);
   --text2-dark: hsl(var(--hue) 5% 65%);
