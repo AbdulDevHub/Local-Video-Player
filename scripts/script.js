@@ -481,19 +481,21 @@ const fileManagement = {
   },
 
   async openFilePicker() {
-    const [fileHandle] = await window.showOpenFilePicker({
-      excludeAcceptAllOption: true,
-      types: [
-        {
-          description: "Videos",
-          accept: {
-            "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
+    try {
+      const [fileHandle] = await window.showOpenFilePicker({
+        excludeAcceptAllOption: true,
+        types: [
+          {
+            description: "Videos",
+            accept: {
+              "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
+            },
           },
-        },
-      ],
-      multiple: false,
-    })
-    fileManagement.processFile(fileHandle)
+        ],
+        multiple: false,
+      })
+      fileManagement.processFile(fileHandle)
+    } catch {console.info("The user cancelled the file picker.")}
   },
 }
 
