@@ -16,6 +16,8 @@ const state = {
   isSmallSeekerActive: false,
   aspectRatio: null,
   seekerWidth: null,
+  inactivityTimeout: null,
+  cursorHiddenClass: "hide-cursor",
 }
 
 const elements = {
@@ -495,7 +497,9 @@ const fileManagement = {
         multiple: false,
       })
       fileManagement.processFile(fileHandle)
-    } catch {console.info("The user cancelled the file picker.")}
+    } catch {
+      console.info("The user cancelled the file picker.")
+    }
   },
 }
 
@@ -522,6 +526,43 @@ const zoomControls = {
     const isZoomedIn = elements.zoomBtn.textContent === "zoom_out_map"
     elements.video.style.objectFit = isZoomedIn ? "cover" : "contain"
     elements.zoomBtn.textContent = isZoomedIn ? "crop_free" : "zoom_out_map"
+  },
+}
+
+// ----------------------------- CURSOR HIDING -----------------------------
+const cursorHandler = {
+  setupCursorHiding() {
+    const video = elements.video
+    const player = elements.player
+
+    // Remove any existing event listeners to prevent multiple bindings
+    player.removeEventListener("mousemove", cursorHandler.handleMouseMove)
+    player.removeEventListener("mouseleave", cursorHandler.clearInactivityTimeout)
+    video.removeEventListener("play", cursorHandler.clearInactivityTimeout)
+    video.removeEventListener("pause", cursorHandler.clearInactivityTimeout)
+
+    // Add event listeners
+    player.addEventListener("mousemove", cursorHandler.handleMouseMove.bind(cursorHandler))
+    player.addEventListener("mouseleave", cursorHandler.clearInactivityTimeout.bind(cursorHandler))
+    video.addEventListener("play", cursorHandler.clearInactivityTimeout.bind(cursorHandler))
+    video.addEventListener("pause", cursorHandler.clearInactivityTimeout.bind(cursorHandler))
+  },
+
+  handleMouseMove() {
+    cursorHandler.clearInactivityTimeout()
+    elements.player.classList.remove(state.cursorHiddenClass)
+
+    // Set a new timeout to hide cursor after 2 seconds of inactivity
+    state.inactivityTimeout = setTimeout(() => {
+      elements.player.classList.add(state.cursorHiddenClass)
+    }, 2000)
+  },
+
+  clearInactivityTimeout() {
+    if (state.inactivityTimeout) {
+      clearTimeout(state.inactivityTimeout)
+      state.inactivityTimeout = null
+    }
   },
 }
 
@@ -689,6 +730,7 @@ function initializeEventListeners() {
   elements.rewindBtn.onclick = videoControls.rewind
   elements.forwardBtn.onclick = videoControls.forward
   elements.zoomBtn.onclick = zoomControls.toggle
+  cursorHandler.setupCursorHiding()
 
   elements.video.onratechange = () =>
     (elements.speedControls.value = elements.video.playbackRate.toFixed(2))

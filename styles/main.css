@@ -21,6 +21,10 @@ body,
   height: 100%;
 }
 
+.player.hide-cursor {
+  cursor: none;
+}
+
 body {
   font: 0.8375rem "JetBrains Mono", monospace;
   overflow-x: hidden;
