@@ -965,11 +965,18 @@ function initializeEventListeners() {
   document.addEventListener("keydown", (e) => {
     state.isSmallSeekerActive =
       e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
+    if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
   })
 
   // Reset states
-  elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
-  elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
+  elements.video.addEventListener("play", () => {
+    state.isSmallSeekerActive = false
+    if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
+  })
+  elements.progressBar.addEventListener("click", () => {
+    state.isSmallSeekerActive = false
+    if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
+  })
 
   // Preview handling
   elements.progressBar.addEventListener(
