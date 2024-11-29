@@ -598,15 +598,28 @@ const seekerControls = {
     const previewTime = percent * elements.video.duration
     const previewLeft = e.clientX - state.seekerWidth / 2
 
-    // Round to nearest half second for cache lookup
-    const roundedTime = Math.floor(previewTime * 2) / 2
-    const cachedFrame = state.frameCache.get(roundedTime)
+    // Find the nearest cached frame
+    const samplingRate = this.calculateSamplingRate()
+    const roundedTime = Math.round(previewTime / samplingRate) * samplingRate
+    let cachedFrame = state.frameCache.get(roundedTime)
+
+    // If no exact match, find the closest cached frame within 1 sampling interval
+    if (!cachedFrame) {
+      const nearestTimes = Array.from(state.frameCache.keys()).sort(
+        (a, b) => Math.abs(a - previewTime) - Math.abs(b - previewTime)
+      )
+
+      if (nearestTimes.length > 0 && Math.abs(nearestTimes[0] - previewTime) <= samplingRate) {
+        cachedFrame = state.frameCache.get(nearestTimes[0])
+      }
+    }
 
     if (cachedFrame) {
       seekerControls.updateSeekerPreviewWithFrame(previewLeft, previewTime, cachedFrame)
       return
     }
 
+    // If no nearby frame found, generate one
     const frameData = await seekerControls.generatePreviewFrame(previewTime)
     seekerControls.updateSeekerPreviewWithFrame(previewLeft, previewTime, frameData)
 
@@ -692,9 +705,23 @@ const seekerControls = {
     }
   },
 
+  calculateSamplingRate() {
+    const duration = elements.video.duration
+    // For videos under 5 minutes, sample every 0.5 seconds
+    if (duration <= 300) return 0.5
+    // For videos under 30 minutes, sample every 2 seconds
+    if (duration <= 1800) return 2
+    // For videos under 1 hour, sample every 5 seconds
+    if (duration <= 3600) return 5
+    // For videos under 2 hours, sample every 10 seconds
+    if (duration <= 7200) return 10
+    // For videos over 2 hours, sample every 15 seconds
+    return 15
+  },
+
   calculateTotalFramesNeeded() {
-    // Calculate frames needed at 0.5 second intervals
-    return Math.ceil(elements.video.duration * 2)
+    const samplingRate = this.calculateSamplingRate()
+    return Math.ceil(elements.video.duration / samplingRate)
   },
 
   async preloadSegment(startTime) {
@@ -704,21 +731,22 @@ const seekerControls = {
 
     state.isPreloading = true
     const endTime = Math.min(startTime + state.segmentSize, elements.video.duration)
+    const samplingRate = this.calculateSamplingRate()
 
     try {
-      // Generate previews at half-second intervals
-      for (let time = startTime; time < endTime; time += 0.5) {
+      // Generate previews at calculated sampling rate
+      for (let time = startTime; time < endTime; time += samplingRate) {
         await seekerControls.generatePreviewFrame(time)
 
-        // Update progress tracking
         state.totalFramesProcessed++
         const progress = (state.totalFramesProcessed / state.totalFramesNeeded) * 100
-        if (time % 2 === 0) {
-          // Log every 2 seconds
+
+        // Log progress less frequently for longer videos
+        if (state.totalFramesProcessed % 10 === 0 || progress >= 100) {
           console.log(
-            `Preprocessing progress: ${Math.round(progress)}% (${state.totalFramesProcessed}/${
-              state.totalFramesNeeded
-            } frames)`
+            `Preprocessing progress: ${Math.round(progress)}% ` +
+              `(${state.totalFramesProcessed}/${state.totalFramesNeeded} frames, ` +
+              `sampling every ${samplingRate}s)`
           )
         }
       }
@@ -734,17 +762,22 @@ const seekerControls = {
     state.frameCache.clear()
     state.preloadedSegments.clear()
     state.totalFramesProcessed = 0
+
+    const samplingRate = this.calculateSamplingRate()
     state.totalFramesNeeded = this.calculateTotalFramesNeeded()
 
-    console.log(`Starting video preprocessing... (${state.totalFramesNeeded} frames needed)`)
+    console.log(
+      `Starting video preprocessing... ` +
+        `(${state.totalFramesNeeded} frames needed, ` +
+        `sampling every ${samplingRate}s for ${Math.round(elements.video.duration)}s video)`
+    )
 
-    // Calculate number of segments needed
+    // Adjust segment size based on video length
+    state.segmentSize = Math.max(samplingRate * 5, 5)
+
     const totalSegments = Math.ceil(elements.video.duration / state.segmentSize)
-
-    // Create array of segment start times
     const segmentStarts = Array.from({ length: totalSegments }, (_, i) => i * state.segmentSize)
 
-    // Process all segments in order
     const processSegments = async () => {
       for (const startTime of segmentStarts) {
         await this.preloadSegment(startTime)
@@ -752,7 +785,6 @@ const seekerControls = {
       console.log("Complete preprocessing finished!")
     }
 
-    // Start processing in background
     processSegments()
   },
 
