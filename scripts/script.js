@@ -741,12 +741,17 @@ const seekerControls = {
         state.totalFramesProcessed++
         const progress = (state.totalFramesProcessed / state.totalFramesNeeded) * 100
 
-        // Log progress less frequently for longer videos
-        if (state.totalFramesProcessed % 10 === 0 || progress >= 100) {
+        // Only log at 10% intervals and completion
+        const roundedProgress = Math.floor(progress / 10) * 10
+        if (
+          roundedProgress >
+            Math.floor((((state.totalFramesProcessed - 1) / state.totalFramesNeeded) * 100) / 10) *
+              10 ||
+          state.totalFramesProcessed === state.totalFramesNeeded
+        ) {
           console.log(
             `Preprocessing progress: ${Math.round(progress)}% ` +
-              `(${state.totalFramesProcessed}/${state.totalFramesNeeded} frames, ` +
-              `sampling every ${samplingRate}s)`
+              `(${state.totalFramesProcessed}/${state.totalFramesNeeded} frames)`
           )
         }
       }
@@ -767,9 +772,8 @@ const seekerControls = {
     state.totalFramesNeeded = this.calculateTotalFramesNeeded()
 
     console.log(
-      `Starting video preprocessing... ` +
-        `(${state.totalFramesNeeded} frames needed, ` +
-        `sampling every ${samplingRate}s for ${Math.round(elements.video.duration)}s video)`
+      `Starting preprocessing: ${state.totalFramesNeeded} frames needed, ` +
+        `sampling every ${samplingRate}s for ${Math.round(elements.video.duration)}s video`
     )
 
     // Adjust segment size based on video length
@@ -782,7 +786,7 @@ const seekerControls = {
       for (const startTime of segmentStarts) {
         await this.preloadSegment(startTime)
       }
-      console.log("Complete preprocessing finished!")
+      console.log("Preprocessing complete!")
     }
 
     processSegments()
