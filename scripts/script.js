@@ -18,6 +18,15 @@ const state = {
   seekerWidth: null,
   inactivityTimeout: null,
   cursorHiddenClass: "hide-cursor",
+  videoBuffer: null,
+  previewCanvas: null,
+  previewContext: null,
+  frameCache: new Map(),
+  preloadedSegments: new Set(), // Track which segments we've preloaded
+  segmentSize: 5, // Seconds per segment
+  isPreloading: false,
+  totalFramesProcessed: 0,
+  totalFramesNeeded: 0,
 }
 
 const elements = {
@@ -581,7 +590,7 @@ const seekerControls = {
     elements.video.currentTime = percent * elements.video.duration
   },
 
-  handleSmallSeeker(e) {
+  async handleSmallSeeker(e) {
     if (!state.isVideoLoaded || !state.isSmallSeekerActive) return
 
     const rect = elements.progressBar.getBoundingClientRect()
@@ -589,16 +598,162 @@ const seekerControls = {
     const previewTime = percent * elements.video.duration
     const previewLeft = e.clientX - state.seekerWidth / 2
 
-    seekerControls.updateSeekerPreview(previewLeft, previewTime)
+    // Round to nearest half second for cache lookup
+    const roundedTime = Math.floor(previewTime * 2) / 2
+    const cachedFrame = state.frameCache.get(roundedTime)
+
+    if (cachedFrame) {
+      seekerControls.updateSeekerPreviewWithFrame(previewLeft, previewTime, cachedFrame)
+      return
+    }
+
+    const frameData = await seekerControls.generatePreviewFrame(previewTime)
+    seekerControls.updateSeekerPreviewWithFrame(previewLeft, previewTime, frameData)
+
+    // Start preloading the surrounding segment
+    const segmentStart = Math.floor(previewTime / state.segmentSize) * state.segmentSize
+    seekerControls.preloadSegment(segmentStart)
   },
 
-  updateSeekerPreview(left, time) {
+  predictivePreload(e) {
+    if (!state.isVideoLoaded || !state.isSmallSeekerActive) return
+
+    const rect = elements.progressBar.getBoundingClientRect()
+    const percent = (e.clientX - rect.left) / rect.width
+    const currentTime = percent * elements.video.duration
+    const segmentStart = Math.floor(currentTime / state.segmentSize) * state.segmentSize
+
+    // Preload current segment and next segment based on mouse direction
+    seekerControls.preloadSegment(segmentStart)
+    if (e.movementX > 0) {
+      seekerControls.preloadSegment(segmentStart + state.segmentSize)
+    } else if (e.movementX < 0) {
+      seekerControls.preloadSegment(Math.max(0, segmentStart - state.segmentSize))
+    }
+  },
+
+  async generatePreviewFrame(time) {
+    if (!state.videoBuffer.src) {
+      state.videoBuffer.src = elements.video.src
+      await new Promise((resolve) => {
+        state.videoBuffer.addEventListener("loadeddata", resolve, { once: true })
+      })
+    }
+
+    state.videoBuffer.currentTime = time
+    await new Promise((resolve) => {
+      state.videoBuffer.addEventListener("seeked", resolve, { once: true })
+    })
+
+    // Use higher quality preview dimensions
+    const width = 320 // doubled from previous
+    const height = 180 // doubled from previous
+
+    if (state.previewCanvas.width !== width) {
+      state.previewCanvas.width = width
+      state.previewCanvas.height = height
+    }
+
+    // Draw frame with better quality
+    state.previewContext.drawImage(state.videoBuffer, 0, 0, width, height)
+
+    // Use higher quality JPEG encoding
+    const frameData = state.previewCanvas.toDataURL("image/jpeg", 0.9)
+    state.frameCache.set(Math.floor(time * 2) / 2, frameData) // Store at half-second precision
+
+    // Clean cache if too large (increased for better coverage)
+    if (state.frameCache.size > 500) {
+      const firstKey = state.frameCache.keys().next().value
+      state.frameCache.delete(firstKey)
+    }
+
+    return frameData
+  },
+
+  updateSeekerPreviewWithFrame(left, time, frameData) {
     elements.seekerPreview.style.left = `${left}px`
     elements.seekerPreview.style.display = "block"
-    elements.previewVideo.src = elements.video.src
-    elements.previewVideo.currentTime = time
-    elements.seekerPreview.innerHTML = `<div>${utils.formatTime(time)}</div>`
-    elements.seekerPreview.prepend(elements.previewVideo)
+
+    // Create preview content
+    elements.seekerPreview.innerHTML = `
+      <img src="${frameData}" alt="Preview" style="width: auto; height: 100%;">
+      <div>${utils.formatTime(time)}</div>
+    `
+  },
+
+  throttle(func, limit) {
+    let inThrottle
+    return function (...args) {
+      if (!inThrottle) {
+        func.apply(this, args)
+        inThrottle = true
+        setTimeout(() => (inThrottle = false), limit)
+      }
+    }
+  },
+
+  calculateTotalFramesNeeded() {
+    // Calculate frames needed at 0.5 second intervals
+    return Math.ceil(elements.video.duration * 2)
+  },
+
+  async preloadSegment(startTime) {
+    const segmentId = Math.floor(startTime / state.segmentSize)
+
+    if (state.preloadedSegments.has(segmentId) || state.isPreloading) return
+
+    state.isPreloading = true
+    const endTime = Math.min(startTime + state.segmentSize, elements.video.duration)
+
+    try {
+      // Generate previews at half-second intervals
+      for (let time = startTime; time < endTime; time += 0.5) {
+        await seekerControls.generatePreviewFrame(time)
+
+        // Update progress tracking
+        state.totalFramesProcessed++
+        const progress = (state.totalFramesProcessed / state.totalFramesNeeded) * 100
+        if (time % 2 === 0) {
+          // Log every 2 seconds
+          console.log(
+            `Preprocessing progress: ${Math.round(progress)}% (${state.totalFramesProcessed}/${
+              state.totalFramesNeeded
+            } frames)`
+          )
+        }
+      }
+      state.preloadedSegments.add(segmentId)
+    } catch (error) {
+      console.warn("Error preloading segment:", error)
+    } finally {
+      state.isPreloading = false
+    }
+  },
+
+  initializePreprocessing() {
+    state.frameCache.clear()
+    state.preloadedSegments.clear()
+    state.totalFramesProcessed = 0
+    state.totalFramesNeeded = this.calculateTotalFramesNeeded()
+
+    console.log(`Starting video preprocessing... (${state.totalFramesNeeded} frames needed)`)
+
+    // Calculate number of segments needed
+    const totalSegments = Math.ceil(elements.video.duration / state.segmentSize)
+
+    // Create array of segment start times
+    const segmentStarts = Array.from({ length: totalSegments }, (_, i) => i * state.segmentSize)
+
+    // Process all segments in order
+    const processSegments = async () => {
+      for (const startTime of segmentStarts) {
+        await this.preloadSegment(startTime)
+      }
+      console.log("Complete preprocessing finished!")
+    }
+
+    // Start processing in background
+    processSegments()
   },
 
   toggleGiantSeeker(e) {
@@ -646,6 +801,95 @@ function initializeVideo() {
   videoControls.updateProgressBarValue()
   videoControls.updateIndicators()
   elements.duration.textContent = utils.secondsToTime(elements.video.duration)
+}
+
+function initializePreviewSystem() {
+  // Create canvas once and reuse
+  state.previewCanvas = document.createElement("canvas")
+  state.previewCanvas.width = 160
+  state.previewCanvas.height = 90
+  state.previewContext = state.previewCanvas.getContext("2d")
+
+  // Set up video buffer
+  state.videoBuffer = document.createElement("video")
+  state.videoBuffer.preload = "auto"
+
+  // Enable fast seeking
+  state.videoBuffer.addEventListener("loadedmetadata", () => {
+    state.videoBuffer.fastSeek = true
+  })
+}
+
+const seekerEvents = {
+  initializeProgressControls() {
+    elements.progressBar.addEventListener("input", seekerControls.seek)
+    elements.progressBar.onfocus = () => elements.progressBar.blur()
+  },
+
+  initializeGiantSeeker() {
+    window.addEventListener("keydown", seekerControls.toggleGiantSeeker)
+    window.addEventListener("mousemove", (e) => seekerControls.handleGiantSeeker(e))
+    elements.progressBar.addEventListener("click", seekerControls.updateTimeOnGiantSeekerClick)
+    elements.video.addEventListener("play", seekerControls.resetGiantSeekerOnPlay)
+  },
+
+  initializeSmallSeeker() {
+    // Initial setup and preprocessing
+    elements.video.addEventListener("loadedmetadata", () => {
+      seekerControls.setVideoProperties()
+      seekerControls.initializePreprocessing()
+    })
+
+    // Keyboard controls
+    document.addEventListener("keydown", (e) => {
+      state.isSmallSeekerActive =
+        e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
+    })
+
+    // Reset states
+    elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
+    elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
+
+    // Preview handling
+    elements.progressBar.addEventListener(
+      "mousemove",
+      seekerControls.throttle((e) => {
+        seekerControls.handleSmallSeeker(e)
+        seekerControls.predictivePreload(e)
+      }, 50)
+    )
+
+    elements.progressBar.addEventListener("mouseleave", () => {
+      elements.seekerPreview.style.display = "none"
+    })
+  },
+
+  initializeCleanup() {
+    // Clean up on video source change
+    elements.video.addEventListener("emptied", () => {
+      state.frameCache.clear()
+      if (state.videoBuffer) {
+        state.videoBuffer.src = ""
+      }
+      elements.seekerPreview.style.display = "none"
+    })
+
+    // Clean up before page unload
+    window.addEventListener("beforeunload", () => {
+      state.frameCache.clear()
+      if (state.videoBuffer) {
+        state.videoBuffer.src = ""
+      }
+    })
+  },
+
+  initialize() {
+    this.initializeProgressControls()
+    this.initializeGiantSeeker()
+    this.initializeSmallSeeker()
+    this.initializeCleanup()
+    initializePreviewSystem()
+  },
 }
 
 function initializeEventListeners() {
@@ -704,24 +948,60 @@ function initializeEventListeners() {
   elements.progressBar.addEventListener("input", seekerControls.seek)
   elements.progressBar.onfocus = () => elements.progressBar.blur()
 
-  // Giant seeker events
+  // --------------- Giant Seeker Events ---------------
   window.addEventListener("keydown", seekerControls.toggleGiantSeeker)
   window.addEventListener("mousemove", (e) => seekerControls.handleGiantSeeker(e))
   elements.progressBar.addEventListener("click", seekerControls.updateTimeOnGiantSeekerClick)
   elements.video.addEventListener("play", seekerControls.resetGiantSeekerOnPlay)
 
-  // Small seeker events
-  elements.video.addEventListener("loadedmetadata", seekerControls.setVideoProperties)
+  // --------------- Small Seeker Events ---------------
+  // Initial setup and preprocessing
+  elements.video.addEventListener("loadedmetadata", () => {
+    seekerControls.setVideoProperties()
+    seekerControls.initializePreprocessing()
+  })
+
+  // Keyboard controls
   document.addEventListener("keydown", (e) => {
     state.isSmallSeekerActive =
       e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
   })
+
+  // Reset states
   elements.video.addEventListener("play", () => (state.isSmallSeekerActive = false))
   elements.progressBar.addEventListener("click", () => (state.isSmallSeekerActive = false))
-  elements.progressBar.addEventListener("mousemove", (e) => seekerControls.handleSmallSeeker(e))
+
+  // Preview handling
+  elements.progressBar.addEventListener(
+    "mousemove",
+    seekerControls.throttle((e) => {
+      seekerControls.handleSmallSeeker(e)
+      seekerControls.predictivePreload(e)
+    }, 50)
+  )
+
   elements.progressBar.addEventListener("mouseleave", () => {
     elements.seekerPreview.style.display = "none"
   })
+
+  // Clean up on video source change
+  elements.video.addEventListener("emptied", () => {
+    state.frameCache.clear()
+    if (state.videoBuffer) {
+      state.videoBuffer.src = ""
+    }
+    elements.seekerPreview.style.display = "none"
+  })
+
+  // Clean up before page unload
+  window.addEventListener("beforeunload", () => {
+    state.frameCache.clear()
+    if (state.videoBuffer) {
+      state.videoBuffer.src = ""
+    }
+  })
+
+  initializePreviewSystem()
 
   // ============= PLAYBACK RATE EVENTS =============
   elements.video.addEventListener("loadedmetadata", initializeVideo)
