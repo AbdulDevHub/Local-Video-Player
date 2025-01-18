@@ -27,6 +27,10 @@ const state = {
   isPreloading: false,
   totalFramesProcessed: 0,
   totalFramesNeeded: 0,
+  audioContext: null,
+  gainNode: null,
+  audioSource: null,
+  lastVolume: 1,
 }
 
 const elements = {
@@ -51,6 +55,8 @@ const elements = {
   timeRemaining: document.querySelector(".time-remaining"),
   rewindBtn: document.querySelector(".rewind-btn"),
   forwardBtn: document.querySelector(".forward-btn"),
+  volumeBtn: document.querySelector(".volume-btn"),
+  volumeControls: document.querySelector("#volume-controls"),
   duration: document.querySelector(".duration"),
 }
 
@@ -134,8 +140,60 @@ const videoControls = {
     elements.video.paused ? elements.video.play() : elements.video.pause()
   },
 
+  updateVolume() {
+    // Convert the range value (0-500) to a volume value (0-1)
+    const volumeValue = elements.volumeControls.valueAsNumber / 100
+
+    // Update progress bar fill
+    elements.volumeControls.style.setProperty(
+      "--progress",
+      `${elements.volumeControls.valueAsNumber / 5}%`
+    )
+
+    // Update the amplified class based on volume level
+    if (volumeValue > 1) {
+      elements.volumeControls.classList.add("amplified")
+    } else {
+      elements.volumeControls.classList.remove("amplified")
+    }
+
+    // For values above 100%, we'll need to use the Web Audio API to boost the volume
+    if (volumeValue <= 1) {
+      elements.video.volume = volumeValue
+    } else {
+      // Ensure base volume is at maximum
+      elements.video.volume = 1
+
+      // Initialize Web Audio API if not already done
+      if (!state.audioContext) {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        state.gainNode = state.audioContext.createGain()
+        state.audioSource = state.audioContext.createMediaElementSource(elements.video)
+        state.audioSource.connect(state.gainNode)
+        state.gainNode.connect(state.audioContext.destination)
+      }
+
+      // Set the gain (values above 1 will amplify the sound)
+      state.gainNode.gain.value = volumeValue
+    }
+
+    // Update volume icon based on current volume
+    const volumeIcon = elements.volumeBtn
+    if (volumeValue === 0) {
+      volumeIcon.textContent = "volume_off"
+    } else {
+      volumeIcon.textContent = "volume_up"
+    }
+  },
+
   toggleMute() {
-    elements.video.muted = !elements.video.muted
+    if (elements.video.volume > 0) {
+      state.lastVolume = elements.video.volume
+      elements.volumeControls.value = 0
+    } else {
+      elements.volumeControls.value = state.lastVolume * 100
+    }
+    videoControls.updateVolume()
   },
 
   async togglePictureInPicture() {
@@ -395,6 +453,24 @@ const eventHandlers = {
             state.pressedGKey = true
             videoStretching.toggleStretchedFullscreen()
           }
+        }
+      },
+      ArrowUp: () => {
+        if (document.activeElement.tagName !== "INPUT") {
+          elements.volumeControls.valueAsNumber = Math.min(
+            elements.volumeControls.valueAsNumber + 10,
+            500
+          )
+          videoControls.updateVolume()
+        }
+      },
+      ArrowDown: () => {
+        if (document.activeElement.tagName !== "INPUT") {
+          elements.volumeControls.valueAsNumber = Math.max(
+            elements.volumeControls.valueAsNumber - 10,
+            0
+          )
+          videoControls.updateVolume()
         }
       },
     }
@@ -837,6 +913,10 @@ function initializeVideo() {
   videoControls.updateProgressBarValue()
   videoControls.updateIndicators()
   elements.duration.textContent = utils.secondsToTime(elements.video.duration)
+  elements.volumeControls.style.setProperty(
+    "--progress",
+    `${elements.volumeControls.valueAsNumber / 5}%`
+  )
 }
 
 function initializePreviewSystem() {
@@ -880,6 +960,17 @@ function initializeEventListeners() {
       elements.timeRemaining.hidden,
     ]
   })
+
+  // Volume control events
+  elements.volumeBtn.onclick = videoControls.toggleMute
+  elements.volumeControls.oninput = videoControls.updateVolume
+  elements.video.onvolumechange = () => {
+    elements.volumeControls.value = elements.video.volume * 100
+    elements.volumeControls.style.setProperty(
+      "--progress",
+      `${elements.volumeControls.valueAsNumber / 5}%`
+    )
+  }
 
   // ============= WINDOW EVENTS =============
   document.addEventListener("visibilitychange", eventHandlers.handleVisibilityChange)

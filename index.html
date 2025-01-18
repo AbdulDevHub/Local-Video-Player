@@ -30,6 +30,10 @@
 		<button type="button" aria-label="Toggle play/pause" class="material-icon play-btn">play_arrow</button>
 		<button type="button" aria-label="Rewind 10 seconds" class="material-icon rewind-btn">replay_10</button>
 		<button type="button" aria-label="Forward 10 seconds" class="material-icon forward-btn">forward_10</button>
+		<div class="volume-container">
+			<button type="button" aria-label="Volume" class="material-icon volume-btn">volume_up</button>
+			<input type="range" aria-label="Volume control" value="100" min="0" max="500" step="10" id="volume-controls">
+		</div>
 
 		<button type="button" aria-label="Toggle time elapsed/remaining" id="time-indicator">
 			<time role="timer" class="current-time">00:00</time>

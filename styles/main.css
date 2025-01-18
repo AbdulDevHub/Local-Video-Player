@@ -147,6 +147,93 @@ body {
       }
     }
 
+    .volume-container {
+      display: flex;
+      align-items: center;
+      position: relative;
+
+      #volume-controls {
+        width: 0;
+        padding: 0;
+        margin: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: all var(--duration);
+        cursor: pointer;
+        /* Remove default styling */
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+        position: relative;
+
+        /* Define colors */
+        --thumb-color: white;
+        --fill-color: white;
+        --background-color: rgba(255, 255, 255, 0.3);
+        --progress: 100%; /* Set initial progress to 100% since default volume is 100 */
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 1.5rem;
+          transform: translateY(-50%);
+          background: transparent;
+          pointer-events: all;
+          cursor: pointer;
+        }
+
+        &.amplified {
+          --thumb-color: #f3c669;
+          --fill-color: #f3c669;
+        }
+
+        /* Track styling */
+        &::-webkit-slider-runnable-track {
+          height: 3px;
+          background: linear-gradient(
+            to right,
+            var(--fill-color) var(--progress),
+            var(--background-color) var(--progress)
+          );
+          border-radius: 2px;
+          border: none;
+        }
+
+        /* Thumb styling */
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--thumb-color);
+          margin-top: -4.5px;
+          cursor: pointer;
+          transition: transform 0.2s;
+
+          &:hover {
+            transform: scale(1.2);
+          }
+        }
+      }
+
+      /* Show volume slider on container hover */
+      &:hover #volume-controls {
+        width: 80px; /* Slightly reduced to account for thumb overflow */
+        opacity: 1;
+        margin: 0 8px;
+        pointer-events: auto;
+      }
+
+      .volume-btn {
+        margin-right: 0;
+        height: 2.75rem;
+      }
+    }
+
     &.hidden {
       display: none;
     }
