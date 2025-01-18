@@ -8,6 +8,7 @@ This a video player for local videos whose main features are:
 
 * Light/dark theme (following system preferences)
 * Continue watching from where you left off[^1]
+* Volume amplification up to 500% for quiet videos
 * [Keyboard shortcuts](#keyboard-shortcuts)
 * Global Media Controls integration
 * Works offline
@@ -43,8 +44,10 @@ The following keyboard shortcuts are supported:
 |            <kbd>Space</kbd><br><kbd>K</kbd>            | Toggle play/pause                  |
 |                      <kbd>D</kbd>                      | Slow down by 0.1x                  |
 |                      <kbd>S</kbd>                      | Speed up by 0.1x                   |
-| <kbd>Z</kbd><br><kbd>&larr;</kbd><br><kbd>&darr;</kbd> | Rewind 10 seconds                  |
-| <kbd>X</kbd><br><kbd>&rarr;</kbd><br><kbd>&uarr;</kbd> | Forward 10 seconds                 |
+|                   <kbd>&larr;</kbd>                    | Rewind 10 seconds                  |
+|                   <kbd>&rarr;</kbd>                    | Forward 10 seconds                 |
+|                   <kbd>&uarr;</kbd>                    | Increase volume                    |
+|                   <kbd>&darr;</kbd>                    | Decrease volume                    |
 |                      <kbd>R</kbd>                      | Reset default speed                |
 |                   <kbd>Not Set</kbd>                   | Toggle time/remaining              |
 |                      <kbd>M</kbd>                      | Toggle mute                        |
