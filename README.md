@@ -55,7 +55,7 @@ The following keyboard shortcuts are supported:
 |                      <kbd>Q</kbd>                      | Set speed to 1.7x or reset to 1x   |
 |                      <kbd>W</kbd>                      | Set speed to 2x or reset to 1x     |
 |                      <kbd>E</kbd>                      | Set speed to 2.7x or reset to 1x   |
-|                      <kbd>R</kbd>                      | Set speed to 3x or increase to 4x  |
+|                      <kbd>R</kbd>                      | Set speed to 3x or reset to 1x     |
 |                      <kbd>T</kbd>                      | Set speed to 4x or reset to 1x     |
 |                      <kbd>H</kbd>                      | Hide playbar/controls              |
 |                      <kbd>U</kbd>                      | Toggle video stretching            |

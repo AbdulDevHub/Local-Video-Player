@@ -338,8 +338,8 @@ const eventHandlers = {
         else elements.video.playbackRate = 4
       },
       r: () => {
-        // Traverse Speeds
-        if (elements.video.playbackRate === 3) elements.video.playbackRate = 4
+        // Preferred fast speed
+        if (elements.video.playbackRate === 3) elements.video.playbackRate = 1
         else elements.video.playbackRate = 3
       },
       h: () => {
