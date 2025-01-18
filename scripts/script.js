@@ -793,7 +793,7 @@ const seekerControls = {
   },
 
   toggleGiantSeeker(e) {
-    if (e.key === "A") {
+    if (e.key === "Z") {
       state.isGiantSeekerActive = !state.isGiantSeekerActive
 
       if (state.isGiantSeekerActive) {
@@ -928,7 +928,7 @@ function initializeEventListeners() {
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
     state.isSmallSeekerActive =
-      e.key === "a" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
+      e.key === "z" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
     if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
   })
 

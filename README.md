@@ -60,8 +60,8 @@ The following keyboard shortcuts are supported:
 |                      <kbd>H</kbd>                      | Hide playbar/controls              |
 |                      <kbd>U</kbd>                      | Toggle video stretching            |
 |                <kbd>CTRL + ↑→↓← </kbd>                 | Strech video ↑→↓← slightly         |
-|                      <kbd>A</kbd>                      | Toggle giant video seeker mode     |
-|                      <kbd>a</kbd>                      | Toggle small video seeker mode     |
+|                      <kbd>Z</kbd>                      | Toggle giant video seeker mode     |
+|                      <kbd>z</kbd>                      | Toggle small video seeker mode     |
 |                      <kbd>V</kbd>                      | Toggle preview bar                 |
 
 ## Contributing
