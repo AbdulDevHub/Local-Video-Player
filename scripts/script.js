@@ -65,8 +65,10 @@ const utils = {
   clamp: (min, value, max) => Math.min(Math.max(value, min), max),
 
   async hashFile(file) {
-    const arrayBuffer = await file.arrayBuffer()
-    const hashBuffer = await crypto.subtle.digest("SHA-1", arrayBuffer)
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-1",
+      new TextEncoder().encode(file.name + file.size)
+    )
     return Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("")
