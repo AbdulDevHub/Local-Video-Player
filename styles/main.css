@@ -100,7 +100,7 @@ body {
   video {
     flex: 1;
     min-block-size: 0;
-    background-color: var(--surface2);
+    background-color: black;
     transition-duration: var(--duration);
     transition-property: scale, border-radius, border;
 

@@ -389,8 +389,8 @@ const eventHandlers = {
       },
       e: () => {
         // Preferred fast speed
-        if (elements.video.playbackRate === 2.7) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 2.7
+        if (elements.video.playbackRate === 2.5) elements.video.playbackRate = 1
+        else elements.video.playbackRate = 2.5
       },
       t: () => {
         // Preferred fast speed
@@ -578,6 +578,7 @@ const fileManagement = {
             description: "Videos",
             accept: {
               "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
+              "audio/*": [".mp3", ".wav", ".ogg"],
             },
           },
         ],
