@@ -9,6 +9,7 @@ This a video player for local videos whose main features are:
 * Light/dark theme (following system preferences)
 * Continue watching from where you left off[^1]
 * Volume amplification up to 500% for quiet videos
+* Improved speed controls with preset cycling and fine adjustments
 * [Keyboard shortcuts](#keyboard-shortcuts)
 * Global Media Controls integration
 * Works offline
@@ -35,6 +36,16 @@ The page shown in the screenshots will open.
 To open a video, drag and drop it there or click on the button.
 If another video is opened, its state will be saved and the dragged video will be opened.
 
+### Speed Controls
+
+The player features an improved speed control interface with three buttons:
+
+* **Center display**: Click to cycle through preset speeds (1.0x → 1.5x → 2.0x → 2.5x → 3.0x → 4.0x → back to 1.0x). Shows a ★ indicator when on a preset speed.
+* **− button**: Decrease speed by 0.1x for fine-grained control
+* **+ button**: Increase speed by 0.1x for fine-grained control
+
+Speed range: 0.1x to 16.0x
+
 ### Keyboard shortcuts
 
 The following keyboard shortcuts are supported:
@@ -48,21 +59,21 @@ The following keyboard shortcuts are supported:
 |                   <kbd>&rarr;</kbd>                    | Forward 10 seconds                 |
 |                   <kbd>&uarr;</kbd>                    | Increase volume                    |
 |                   <kbd>&darr;</kbd>                    | Decrease volume                    |
-|                      <kbd>R</kbd>                      | Reset default speed                |
-|                   <kbd>Not Set</kbd>                   | Toggle time/remaining              |
+|                      <kbd>A</kbd>                      | Reset to default speed (1x)        |
+|                   <kbd>Click Speed</kbd>               | Toggle time elapsed/remaining      |
 |                      <kbd>M</kbd>                      | Toggle mute                        |
 |                      <kbd>C</kbd>                      | Toggle video zoom                  |
 |                      <kbd>P</kbd>                      | Toggle PiP                         |
 |            <kbd>F</kbd><br><kbd>Enter</kbd>            | Toggle fullscreen                  |
 |                      <kbd>G</kbd>                      | Toggle fullscreen or zoom          |
-|                      <kbd>Q</kbd>                      | Set speed to 1.7x or reset to 1x   |
+|                      <kbd>Q</kbd>                      | Set speed to 1.5x or reset to 1x   |
 |                      <kbd>W</kbd>                      | Set speed to 2x or reset to 1x     |
-|                      <kbd>E</kbd>                      | Set speed to 2.7x or reset to 1x   |
+|                      <kbd>E</kbd>                      | Set speed to 2.5x or reset to 1x   |
 |                      <kbd>R</kbd>                      | Set speed to 3x or reset to 1x     |
 |                      <kbd>T</kbd>                      | Set speed to 4x or reset to 1x     |
 |                      <kbd>H</kbd>                      | Hide playbar/controls              |
 |                      <kbd>U</kbd>                      | Toggle video stretching            |
-|                <kbd>CTRL + ↑→↓← </kbd>                 | Strech video ↑→↓← slightly         |
+|                <kbd>CTRL + ↑→↓← </kbd>                 | Stretch video ↑→↓← slightly        |
 |                      <kbd>Z</kbd>                      | Toggle giant video seeker mode     |
 |                      <kbd>z</kbd>                      | Toggle small video seeker mode     |
 |                      <kbd>V</kbd>                      | Toggle preview bar                 |

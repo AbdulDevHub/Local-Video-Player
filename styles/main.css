@@ -350,34 +350,74 @@ input[type="range"] {
   }
 }
 
-#speed-controls {
+/* Speed Control Container */
+.speed-control-container {
   margin-inline-start: auto;
-  text-align: center;
-  border: thin solid var(--surface4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 2.75rem;
+  background: var(--surface2);
   border-radius: 1.25rem;
-  --text-size: 5em;
-  --buttons-size: 1em;
-  inline-size: var(--text-size);
-  padding-inline: var(--spacing);
+  padding: 4px;
+  border: thin solid var(--surface4);
   box-shadow: inset 0 0 0.25em hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
-  transition: var(--duration);
-  transition-property: inline-size, width;
+}
 
-  &:is(:hover, :focus-visible) {
-    inline-size: calc(var(--text-size) + var(--buttons-size));
-  }
+.speed-display {
+  min-width: 4.5em;
+  text-align: center;
+  padding: 0.4em 0.75em;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 1rem;
+  transition: all 0.2s;
+  background: transparent;
+  user-select: none;
+  color: var(--text2);
+}
 
-  &::-webkit-inner-spin-button {
-    transition-duration: var(--duration);
-    transition-property: margin, opacity;
-    opacity: 0;
-    margin-inline-start: calc(-1 * var(--buttons-size));
+.speed-display:hover {
+  background: var(--surface3);
+  color: var(--text1);
+}
 
-    &:is(:hover, :focus-visible) {
-      opacity: 1;
-      margin: 0;
-    }
-  }
+.speed-display.preset-active {
+  background: var(--surface3);
+  color: var(--text1);
+}
+
+.preset-indicator {
+  font-size: 0.7em;
+  color: var(--video-bar);
+  margin-left: 4px;
+}
+
+.speed-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface3);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  font-weight: bold;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.speed-btn:hover {
+  background: var(--surface4);
+  color: var(--text1);
+  transform: scale(1.1);
+}
+
+.speed-btn:active {
+  transform: scale(0.95);
 }
 
 .stretchClass {

@@ -31,7 +31,12 @@ const state = {
   gainNode: null,
   audioSource: null,
   lastVolume: 1,
+  currentSpeed: 1.0,
+  currentPresetIndex: 0,
+  isOnPreset: true,
 }
+
+const PRESET_SPEEDS = [1.0, 1.5, 2.0, 2.5, 3.0, 4.0]
 
 const elements = {
   dragPanel: document.querySelector("#drag-panel"),
@@ -46,7 +51,11 @@ const elements = {
   playBtn: document.querySelector(".play-btn"),
   fullscreenBtn: document.querySelector(".fullscreen-btn"),
   zoomBtn: document.querySelector(".zoom-btn"),
-  speedControls: document.querySelector("#speed-controls"),
+  speedDisplay: document.querySelector("#speed-display"),
+  speedValue: document.querySelector("#speed-value"),
+  presetIndicator: document.querySelector("#preset-indicator"),
+  decreaseSpeedBtn: document.querySelector("#decrease-speed-btn"),
+  increaseSpeedBtn: document.querySelector("#increase-speed-btn"),
   controls: document.querySelector(".controls"),
   progressBar: document.querySelector("#video-bar"),
   previewBar: document.querySelector("#preview-bar"),
@@ -123,6 +132,7 @@ const storage = {
     let videoState = JSON.parse(localStorage.getItem(state.localStorageKey))
     elements.video.currentTime = videoState.timer
     elements.video.playbackRate = videoState.playbackRate
+    state.currentSpeed = videoState.playbackRate
     console.info("Video state restored from local storage.")
   },
 
@@ -205,8 +215,44 @@ const videoControls = {
   },
 
   updatePlaybackRate() {
-    elements.speedControls.value = parseFloat(elements.speedControls.value).toFixed(2)
-    elements.video.playbackRate = utils.clamp(0.1, elements.speedControls.value, 16)
+    elements.video.playbackRate = utils.clamp(0.1, state.currentSpeed, 16)
+    elements.speedValue.textContent = state.currentSpeed.toFixed(2)
+
+    // Check if current speed matches a preset
+    const matchesPreset = PRESET_SPEEDS.some(
+      (preset) => Math.abs(preset - state.currentSpeed) < 0.01
+    )
+
+    if (matchesPreset && state.isOnPreset) {
+      elements.speedDisplay.classList.add("preset-active")
+      elements.presetIndicator.textContent = "★"
+    } else {
+      elements.speedDisplay.classList.remove("preset-active")
+      elements.presetIndicator.textContent = ""
+    }
+  },
+
+  cyclePresetSpeed() {
+    state.currentPresetIndex = (state.currentPresetIndex + 1) % PRESET_SPEEDS.length
+    state.currentSpeed = PRESET_SPEEDS[state.currentPresetIndex]
+    state.isOnPreset = true
+    videoControls.updatePlaybackRate()
+  },
+
+  adjustSpeed(delta) {
+    state.currentSpeed = Math.max(0.1, Math.min(16, state.currentSpeed + delta))
+    state.currentSpeed = Math.round(state.currentSpeed * 10) / 10
+    state.isOnPreset = false
+
+    // Update preset index if we land on a preset value
+    const presetIndex = PRESET_SPEEDS.findIndex(
+      (preset) => Math.abs(preset - state.currentSpeed) < 0.01
+    )
+    if (presetIndex !== -1) {
+      state.currentPresetIndex = presetIndex
+    }
+
+    videoControls.updatePlaybackRate()
   },
 
   rewind() {
@@ -357,13 +403,11 @@ const eventHandlers = {
       },
       d: () => {
         // Slow down
-        elements.speedControls.stepDown()
-        elements.speedControls.dispatchEvent(new Event("change"))
+        videoControls.adjustSpeed(-0.1)
       },
       s: () => {
         // Speed up
-        elements.speedControls.stepUp()
-        elements.speedControls.dispatchEvent(new Event("change"))
+        videoControls.adjustSpeed(0.1)
       },
       ArrowLeft: () => {
         // Rewind
@@ -379,8 +423,8 @@ const eventHandlers = {
       },
       q: () => {
         // Preferred fast speed
-        if (elements.video.playbackRate === 1.7) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 1.7
+        if (elements.video.playbackRate === 1.5) elements.video.playbackRate = 1
+        else elements.video.playbackRate = 1.5
       },
       w: () => {
         // Preferred fast speed
@@ -1077,10 +1121,19 @@ function initializeEventListeners() {
   elements.zoomBtn.onclick = zoomControls.toggle
   cursorHandler.setupCursorHiding()
 
-  elements.video.onratechange = () =>
-    (elements.speedControls.value = elements.video.playbackRate.toFixed(2))
-  elements.speedControls.onchange = elements.speedControls.oninput =
-    videoControls.updatePlaybackRate
+  elements.video.onratechange = () => {
+    state.currentSpeed = elements.video.playbackRate
+    elements.speedValue.textContent = state.currentSpeed.toFixed(2)
+  }
+  elements.speedDisplay.addEventListener("click", videoControls.cyclePresetSpeed)
+  elements.speedDisplay.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      videoControls.cyclePresetSpeed()
+    }
+  })
+  elements.decreaseSpeedBtn.onclick = () => videoControls.adjustSpeed(-0.1)
+  elements.increaseSpeedBtn.onclick = () => videoControls.adjustSpeed(0.1)
   elements.video.onloadedmetadata = () => {
     state.isVideoReady = true
     if (state.stretchedFullscreenActive) videoStretching.toggle()
