@@ -57,17 +57,17 @@ body {
     box-shadow: inset 0 0 0.75em 0.25em;
   }
 
-  > * {
+  & > * {
     margin-inline: 1em;
     text-align: center;
   }
 
-  #drag-panel-text {
+  & #drag-panel-text {
     margin-bottom: 0.85em;
     color: hsl(0deg 2.11% 72.97%);
   }
 
-  #file-picker {
+  & #file-picker {
     max-inline-size: 20em;
     font-size: 0.5em;
     padding: 0.5em;
@@ -97,7 +97,7 @@ body {
   flex-direction: column;
   background-image: radial-gradient(var(--surface4), var(--surface3));
 
-  video {
+  & video {
     flex: 1;
     min-block-size: 0;
     background-color: black;
@@ -121,7 +121,7 @@ body {
     color: var(--text2);
     background-color: var(--surface2);
 
-    > * {
+    & > * {
       height: 2.75rem;
     }
 
@@ -152,7 +152,7 @@ body {
       align-items: center;
       position: relative;
 
-      #volume-controls {
+      & #volume-controls {
         width: 0;
         padding: 0;
         margin: 0;
@@ -160,17 +160,15 @@ body {
         pointer-events: none;
         transition: all var(--duration);
         cursor: pointer;
-        /* Remove default styling */
         -webkit-appearance: none;
         appearance: none;
         background: transparent;
         position: relative;
 
-        /* Define colors */
         --thumb-color: white;
         --fill-color: white;
         --background-color: rgba(255, 255, 255, 0.3);
-        --progress: 100%; /* Set initial progress to 100% since default volume is 100 */
+        --progress: 100%;
 
         &::before {
           content: "";
@@ -190,7 +188,6 @@ body {
           --fill-color: #f3c669;
         }
 
-        /* Track styling */
         &::-webkit-slider-runnable-track {
           height: 3px;
           background: linear-gradient(
@@ -202,7 +199,6 @@ body {
           border: none;
         }
 
-        /* Thumb styling */
         &::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
@@ -220,9 +216,8 @@ body {
         }
       }
 
-      /* Show volume slider on container hover */
       &:hover #volume-controls {
-        width: 80px; /* Slightly reduced to account for thumb overflow */
+        width: 80px;
         opacity: 1;
         margin: 0 8px;
         pointer-events: auto;
@@ -337,7 +332,7 @@ input[type="range"] {
   place-items: center;
   min-inline-size: 6ch;
 
-  #file-name {
+  & #file-name {
     max-inline-size: 66ch;
     overflow: hidden;
     white-space: nowrap;
@@ -362,86 +357,86 @@ input[type="range"] {
   padding: 4px;
   border: thin solid var(--surface4);
   box-shadow: inset 0 0 0.25em hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
-}
 
-.speed-display {
-  min-width: 4.5em;
-  text-align: center;
-  padding: 0.4em 0.75em;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: 1rem;
-  transition: all 0.2s;
-  background: transparent;
-  user-select: none;
-  color: var(--text2);
-}
+  .speed-display {
+    min-width: 4.5em;
+    text-align: center;
+    padding: 0.4em 0.75em;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 1rem;
+    transition: all 0.2s;
+    background: transparent;
+    user-select: none;
+    color: var(--text2);
 
-.speed-display:hover {
-  background: var(--surface3);
-  color: var(--text1);
-}
+    &:hover {
+      background: var(--surface3);
+      color: var(--text1);
+    }
 
-.speed-display.preset-active {
-  background: var(--surface3);
-  color: var(--text1);
-}
+    &.preset-active {
+      background: var(--surface3);
+      color: var(--text1);
+    }
 
-.preset-indicator {
-  font-size: 0.7em;
-  color: var(--video-bar);
-  margin-left: 4px;
-}
+    .preset-indicator {
+      font-size: 0.7em;
+      color: var(--video-bar);
+      margin-left: 4px;
+    }
+  }
 
-.speed-btn {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: none;
-  background: var(--surface3);
-  color: var(--text2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2em;
-  font-weight: bold;
-  transition: all 0.2s;
-  padding: 0;
-}
+  .speed-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface3);
+    color: var(--text2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.2s;
+    padding: 0;
 
-.speed-btn:hover {
-  background: var(--surface4);
-  color: var(--text1);
-  transform: scale(1.1);
-}
+    &:hover {
+      background: var(--surface4);
+      color: var(--text1);
+      transform: scale(1.1);
+    }
 
-.speed-btn:active {
-  transform: scale(0.95);
+    &:active {
+      transform: scale(0.95);
+    }
+  }
 }
 
 .stretchClass {
   transform-origin: top left;
-  transform: scaleX(1) scaleY(1) !important; /* Original size */
+  transform: scaleX(1) scaleY(1) !important;
 
   &.mode-2 {
     transform-origin: top center;
-    transform: scaleX(1.2) scaleY(1) !important; /* 4:3 complete fullscreen mode */
+    transform: scaleX(1.2) scaleY(1) !important;
   }
 
   &.mode-1 {
     transform-origin: center left;
-    transform: scaleX(1) scaleY(1.11) !important; /* 16:9 complete fullscreen mode */
+    transform: scaleX(1) scaleY(1.11) !important;
   }
 
   &.fullscreen-mode-2 {
     transform-origin: top center;
-    transform: scaleX(1.291) scaleY(1) !important; /* 4:3 partial fullscreen mode*/
+    transform: scaleX(1.291) scaleY(1) !important;
   }
 
   &.fullscreen-mode-1 {
     transform-origin: center left;
-    transform: scaleX(1) scaleY(1.027) !important; /* 16:9 partial fullscreen mode*/
+    transform: scaleX(1) scaleY(1.027) !important;
   }
 }
 
@@ -457,12 +452,12 @@ input[type="range"] {
   color: white;
   text-align: center;
 
-  video {
+  & video {
     width: auto;
     height: 100%;
   }
 
-  div {
+  & div {
     position: absolute;
     bottom: -22px;
     left: 50%;
