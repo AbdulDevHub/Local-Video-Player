@@ -255,6 +255,18 @@ const videoControls = {
     videoControls.updatePlaybackRate()
   },
 
+  togglePresetSpeed(targetSpeed) {
+    if (Math.abs(state.currentSpeed - targetSpeed) < 0.01) {
+      state.currentSpeed = 1.0
+      state.currentPresetIndex = 0
+    } else {
+      state.currentSpeed = targetSpeed
+      state.currentPresetIndex = PRESET_SPEEDS.indexOf(targetSpeed)
+    }
+    state.isOnPreset = true
+    this.updatePlaybackRate()
+  },
+
   rewind() {
     elements.video.currentTime = Math.max(elements.video.currentTime - preferences.timeSkip, 0)
   },
@@ -417,35 +429,12 @@ const eventHandlers = {
         // Advance
         if (document.activeElement.tagName !== "INPUT") videoControls.forward()
       },
-      a: () => {
-        // Reset speed
-        elements.video.playbackRate = elements.video.defaultPlaybackRate
-      },
-      q: () => {
-        // Preferred fast speed
-        if (elements.video.playbackRate === 1.5) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 1.5
-      },
-      w: () => {
-        // Preferred fast speed
-        if (elements.video.playbackRate === 2) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 2
-      },
-      e: () => {
-        // Preferred fast speed
-        if (elements.video.playbackRate === 2.5) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 2.5
-      },
-      t: () => {
-        // Preferred fast speed
-        if (elements.video.playbackRate === 4) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 4
-      },
-      r: () => {
-        // Preferred fast speed
-        if (elements.video.playbackRate === 3) elements.video.playbackRate = 1
-        else elements.video.playbackRate = 3
-      },
+      a: () => videoControls.togglePresetSpeed(1.0), // Reset speed
+      q: () => videoControls.togglePresetSpeed(1.5), // Toggle 1.5x
+      w: () => videoControls.togglePresetSpeed(2.0), // Toggle 2.0x
+      e: () => videoControls.togglePresetSpeed(2.5), // Toggle 2.5x
+      r: () => videoControls.togglePresetSpeed(3.0), // Toggle 3.0x
+      t: () => videoControls.togglePresetSpeed(4.0), // Toggle 4.0x
       h: () => {
         // Hide Playbar/Controls
         if (state.stretchedFullscreenActive) {
