@@ -610,7 +610,7 @@ const fileManagement = {
           {
             description: "Videos",
             accept: {
-              "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2"],
+              "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2", ".mkv"],
               "audio/*": [".mp3", ".wav", ".ogg"],
             },
           },
