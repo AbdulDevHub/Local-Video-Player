@@ -137,11 +137,19 @@ const storage = {
   },
 
   cleanup() {
-    console.log("Video states over 30 days will be deleted.")
+    console.log("Video states over 30 days will be cleaned up.")
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
     Object.keys(localStorage).forEach((key) => {
-      const entryDate = JSON.parse(localStorage.getItem(key)).last_opened
-      if (new Date(entryDate) < new Date(thirtyDaysAgo)) localStorage.removeItem(key)
+      const videoState = JSON.parse(localStorage.getItem(key))
+      if (new Date(videoState.last_opened) < new Date(thirtyDaysAgo)) {
+        // Reset timer to 0, keep playbackRate, update last_opened
+        const updatedState = {
+          timer: 0,
+          playbackRate: videoState.playbackRate,
+          last_opened: Date.now(),
+        }
+        localStorage.setItem(key, JSON.stringify(updatedState))
+      }
     })
   },
 }
