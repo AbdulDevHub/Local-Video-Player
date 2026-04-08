@@ -1037,10 +1037,18 @@ function initializeEventListeners() {
   }
   storage.cleanup()
 
-  // Remove video state from local storage upon video end
+  // Reset video position to 0 upon video end, but preserve playback rate
   elements.video.onended = () => {
-    localStorage.removeItem(state.localStorageKey)
-    console.info("Video ended. Video state deleted from local storage.")
+    const currentState = JSON.parse(localStorage.getItem(state.localStorageKey))
+    if (currentState) {
+      const updatedState = {
+        timer: 0,
+        playbackRate: currentState.playbackRate,
+        last_opened: Date.now(),
+      }
+      localStorage.setItem(state.localStorageKey, JSON.stringify(updatedState))
+      console.info("Video ended. Position reset to 0, but playback rate preserved.")
+    }
   }
 
   // ============= SEEKER CONTROLS EVENTS =============
@@ -1057,7 +1065,7 @@ function initializeEventListeners() {
   // Initial setup and preprocessing
   elements.video.addEventListener("loadedmetadata", () => {
     seekerControls.setVideoProperties()
-    seekerControls.initializePreprocessing()
+    // seekerControls.initializePreprocessing()
   })
 
   // Keyboard controls
