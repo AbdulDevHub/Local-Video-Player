@@ -1,35 +1,234 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-view="home">
+<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width">
-<meta name="description" content="Player for local videos with keyboard shortcuts.">
-<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Local Video Player</title>
+<title>Local Video Player: Free, Private, Offline Video Player in Your Browser</title>
+<meta name="description" content="Play MP4, MKV, WebM, MP3 and more straight from your computer. Free, offline and private: files never leave your device. Resume, playlists, subtitles, 16× speed and 500% volume.">
+<meta name="keywords" content="local video player, online video player, offline video player, play mkv in browser, mp4 player, browser video player, subtitle player, srt player, playback speed, volume booster, chrome extension">
+<meta name="author" content="Abdul Khan">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#16171b">
+<link rel="canonical" href="https://abduldevhub.github.io/Local-Video-Player/">
 
-<link rel="icon" href="icons/favicon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Local Video Player">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://abduldevhub.github.io/Local-Video-Player/">
+<meta property="og:title" content="Local Video Player: play any video file right in your browser">
+<meta property="og:description" content="Free, offline and private. Resume where you left off, playlists, subtitles, 16× speed, 500% volume and 30+ keyboard shortcuts.">
+<meta property="og:image" content="https://abduldevhub.github.io/Local-Video-Player/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Local Video Player start screen with a drop zone and a Continue Watching shelf">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Local Video Player: play any video file right in your browser">
+<meta name="twitter:description" content="Free, offline and private. Resume, playlists, subtitles, 16× speed, 500% volume and 30+ shortcuts.">
+<meta name="twitter:image" content="https://abduldevhub.github.io/Local-Video-Player/images/og-image.png">
+
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="app.webmanifest">
 <link rel="stylesheet" href="styles/main.css">
 
-<script src="scripts/script.js" defer></script>
+<script src="scripts/theme-init.js"></script>
+<script type="module" src="scripts/app.js"></script>
 
-<div class="droppable" id="drag-panel">
-	<span id="drag-panel-text">Drag And Drop A Video</span>
-	<button type="button" id="file-picker">Choose File</button>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Local Video Player",
+  "url": "https://abduldevhub.github.io/Local-Video-Player/",
+  "image": "https://abduldevhub.github.io/Local-Video-Player/images/og-image.png",
+  "description": "A free, private, offline video and audio player that runs in your browser. Plays local files without uploading them, remembers where you left off, and adds playlists, subtitles, speed controls, a volume booster and keyboard shortcuts.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Windows, macOS, Linux, ChromeOS",
+  "browserRequirements": "Requires JavaScript and a modern browser (Chrome, Edge, Firefox or Safari).",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Abdul Khan", "url": "https://github.com/AbdulDevHub" },
+  "softwareVersion": "3.0.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "featureList": [
+    "Plays MP4, MKV, WebM, MOV, MP3, WAV, FLAC and more without uploading",
+    "Continue Watching shelf that resumes where you left off",
+    "Playlists from multiple files or whole folders",
+    "SRT and VTT subtitles with timing and size controls",
+    "Playback speed from 0.1x to 16x with presets",
+    "Volume boost up to 500%",
+    "A-B loop, frame-by-frame stepping and screenshots",
+    "30+ keyboard shortcuts",
+    "Works offline and installs as an app"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Are my videos uploaded anywhere?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Files are played directly from your device by your browser. Nothing is uploaded, and there are no accounts, ads or tracking." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which file formats can it play?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Anything your browser can decode: usually MP4 (H.264, H.265 on supported hardware, AV1), WebM, MKV, MOV, OGG, MP3, M4A, WAV and FLAC. Chrome and Edge support the most formats." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I add subtitles?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Drop an .srt or .vtt file onto the player, or drop it together with the video. Subtitles with the same file name as the video are matched automatically. You can shift the timing and change the text size from the subtitles menu." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it remember where I stopped?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Your position and speed are saved in your browser, and partly watched videos appear in the Continue Watching shelf. In Chrome and Edge one click reopens the file; in other browsers you pick the file again and it resumes." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work offline?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. After your first visit the player works without an internet connection, and you can install it as an app. It is also available as a Chrome extension." }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<!-- ============================== START SCREEN ============================== -->
+<div class="landing droppable" id="drag-panel">
+	<header class="site-header">
+		<a class="brand" href="./" aria-label="Local Video Player home">
+			<img src="icons/icon.svg" alt="" width="32" height="32">
+			<span>Local Video Player</span>
+		</a>
+		<nav aria-label="Main">
+			<a href="#features">Features</a>
+			<a href="#shortcuts">Shortcuts</a>
+			<a href="#faq" class="web-only">FAQ</a>
+			<a href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank">GitHub</a>
+			<button type="button" class="icon-btn material-icon" id="theme-btn" aria-label="Change theme" title="Theme">dark_mode</button>
+		</nav>
+	</header>
+
+	<main>
+		<section class="hero" aria-labelledby="hero-title">
+			<p class="eyebrow"><span class="material-icon" aria-hidden="true">lock</span> 100% private · works offline · no uploads</p>
+			<h1 id="hero-title">Play any video on your computer, <em>right in your browser</em>.</h1>
+			<p class="lede">MP4, MKV, WebM, MP3 and more. Pick up where you left off, build playlists, add subtitles and play at up to 16× speed. Your files never leave your device.</p>
+
+			<div class="drop-zone" id="drop-zone">
+				<span class="material-icon drop-icon" aria-hidden="true">movie</span>
+				<p class="drop-title" id="drag-panel-text">Drop videos, a folder or subtitles here</p>
+				<div class="drop-actions">
+					<button type="button" class="btn primary" id="file-picker"><span class="material-icon" aria-hidden="true">file_open</span>Choose files</button>
+					<button type="button" class="btn" id="folder-picker"><span class="material-icon" aria-hidden="true">folder_open</span>Open folder</button>
+				</div>
+				<p class="drop-hint">or press <kbd>O</kbd> · <kbd>?</kbd> for shortcuts</p>
+				<input type="file" id="file-input" multiple hidden accept="video/*,audio/*,.mkv,.ts,.m2ts,.flac,.srt,.vtt">
+				<input type="file" id="folder-input" webkitdirectory hidden>
+			</div>
+			<div class="hero-ctas web-only">
+				<button type="button" class="btn ghost" id="install-btn" hidden><span class="material-icon" aria-hidden="true">install_desktop</span>Install app</button>
+				<a class="btn ghost" href="https://github.com/AbdulDevHub/Local-Video-Player#install-the-chrome-extension" rel="noopener" target="_blank"><span class="material-icon" aria-hidden="true">extension</span>Get the Chrome extension</a>
+			</div>
+		</section>
+
+		<section class="shelf" id="continue-watching" aria-labelledby="cw-title" hidden>
+			<div class="section-head">
+				<h2 id="cw-title">Continue watching</h2>
+				<button type="button" class="link-btn" id="cw-clear">Clear all</button>
+			</div>
+			<ul class="shelf-list" id="cw-list"></ul>
+		</section>
+
+		<section class="features" id="features" aria-labelledby="features-title">
+			<h2 id="features-title">Everything a desktop player does, without installing one</h2>
+			<ul class="feature-grid">
+				<li><span class="material-icon" aria-hidden="true">history</span><h3>Continue watching</h3><p>Your place and speed are saved for every file. One click brings you back to where you stopped.</p></li>
+				<li><span class="material-icon" aria-hidden="true">playlist_play</span><h3>Playlists &amp; folders</h3><p>Drop a whole season or a folder of lectures. Episodes play in order, one after another.</p></li>
+				<li><span class="material-icon" aria-hidden="true">subtitles</span><h3>Subtitles</h3><p>SRT and VTT, matched by file name. Fix out-of-sync timing and resize the text.</p></li>
+				<li><span class="material-icon" aria-hidden="true">speed</span><h3>Speed control</h3><p>0.1× to 16× in fine steps, plus one-key presets for 1.5×, 2×, 2.5×, 3× and 4×.</p></li>
+				<li><span class="material-icon" aria-hidden="true">volume_up</span><h3>500% volume boost</h3><p>Make quiet recordings and lectures loud enough to hear.</p></li>
+				<li><span class="material-icon" aria-hidden="true">repeat</span><h3>A-B loop &amp; frame steps</h3><p>Loop a section to practise, step frame by frame and save screenshots.</p></li>
+				<li><span class="material-icon" aria-hidden="true">fit_screen</span><h3>Zoom &amp; stretch</h3><p>Fill the screen by cropping or stretching, and fine-tune it with arrow keys.</p></li>
+				<li><span class="material-icon" aria-hidden="true">wifi_off</span><h3>Offline &amp; private</h3><p>No uploads, accounts or ads. Install it as an app and it works without internet.</p></li>
+			</ul>
+		</section>
+
+		<section class="shortcuts-teaser" id="shortcuts" aria-labelledby="shortcuts-title">
+			<div>
+				<h2 id="shortcuts-title">Built for the keyboard</h2>
+				<p>More than 30 shortcuts. The essentials:</p>
+				<ul class="key-list">
+					<li><kbd>Space</kbd> Play / pause</li>
+					<li><kbd>←</kbd><kbd>→</kbd> Skip 10 seconds</li>
+					<li><kbd>S</kbd><kbd>D</kbd> Speed ± 0.1×</li>
+					<li><kbd>Q</kbd>–<kbd>T</kbd> 1.5× to 4× presets</li>
+					<li><kbd>F</kbd> Fullscreen</li>
+					<li><kbd>N</kbd><kbd>B</kbd> Next / previous</li>
+				</ul>
+			</div>
+			<button type="button" class="btn" data-open-shortcuts><span class="material-icon" aria-hidden="true">keyboard</span>See all shortcuts</button>
+		</section>
+
+		<section class="faq web-only" id="faq" aria-labelledby="faq-title">
+			<h2 id="faq-title">Questions</h2>
+			<details><summary>Are my videos uploaded anywhere?</summary><p>No. Files are played directly from your device by your browser. Nothing is uploaded, and there are no accounts, ads or tracking.</p></details>
+			<details><summary>Which file formats can it play?</summary><p>Anything your browser can decode: usually MP4 (H.264, H.265 on supported hardware, AV1), WebM, MKV, MOV, OGG, MP3, M4A, WAV and FLAC. Chrome and Edge support the most formats.</p></details>
+			<details><summary>How do I add subtitles?</summary><p>Drop an .srt or .vtt file onto the player, or drop it together with the video. Subtitles with the same file name as the video are matched automatically. You can shift the timing and change the text size from the subtitles menu.</p></details>
+			<details><summary>Does it remember where I stopped?</summary><p>Yes. Your position and speed are saved in your browser, and partly watched videos appear in the Continue Watching shelf. In Chrome and Edge one click reopens the file; in other browsers you pick the file again and it resumes.</p></details>
+			<details><summary>Does it work offline?</summary><p>Yes. After your first visit the player works without an internet connection, and you can install it as an app. It is also available as a Chrome extension.</p></details>
+		</section>
+	</main>
+
+	<footer class="site-footer">
+		<p>Open source under the MIT License · Made by <a href="https://github.com/AbdulDevHub" rel="noopener" target="_blank">Abdul Khan</a> · <a href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank">Source on GitHub</a></p>
+	</footer>
 </div>
-<div id="drop-overlay" hidden></div>
 
+<!-- Full-window drop target, shown while files are dragged over the page -->
+<div id="drop-overlay" hidden>
+	<div class="drop-overlay-box"><span class="material-icon" aria-hidden="true">download</span><p>Drop to play</p></div>
+</div>
+
+<!-- ============================== PLAYER ============================== -->
 <div class="player droppable" hidden>
-	<video id="main-video" preload="auto"></video>
+	<div class="stage">
+		<video id="main-video" preload="auto"></video>
+		<div id="subtitle-overlay" aria-live="off"></div>
+		<div id="hud" aria-live="polite"></div>
+		<div id="pulse" aria-hidden="true"></div>
+
+		<aside id="playlist-panel" aria-labelledby="playlist-title" hidden>
+			<div class="panel-head">
+				<h2 id="playlist-title">Playlist <span id="playlist-count"></span></h2>
+				<button type="button" class="icon-btn material-icon" id="playlist-add" aria-label="Add files to playlist" title="Add files">add</button>
+				<button type="button" class="icon-btn material-icon" id="playlist-close" aria-label="Close playlist" title="Close (L)">close</button>
+			</div>
+			<ol id="playlist-list"></ol>
+		</aside>
+	</div>
 
 	<input type="range" aria-label="Preview bar" value="0" step="any" id="preview-bar">
 	<div class="controls" aria-controls="main-video">
 		<div id="seeker-preview"><video id="preview-video"></video></div>
+		<div id="loop-range" hidden></div>
 		<input type="range" aria-label="Progress bar" value="0" step="any" tabindex="-1" id="video-bar">
 
+		<button type="button" aria-label="Back to start screen" title="Home" class="material-icon home-btn">home</button>
 		<button type="button" aria-label="Toggle play/pause" class="material-icon play-btn">play_arrow</button>
 		<button type="button" aria-label="Rewind 10 seconds" class="material-icon rewind-btn">replay_10</button>
 		<button type="button" aria-label="Forward 10 seconds" class="material-icon forward-btn">forward_10</button>
+		<button type="button" aria-label="Next in playlist" title="Next (N)" class="material-icon next-btn" hidden>skip_next</button>
 		<div class="volume-container">
 			<button type="button" aria-label="Volume" class="material-icon volume-btn">volume_up</button>
 			<input type="range" aria-label="Volume control" value="100" min="0" max="500" step="10" id="volume-controls">
@@ -51,8 +250,33 @@
 			</div>
 			<button type="button" class="speed-btn" id="increase-speed-btn" aria-label="Increase speed by 0.1">+</button>
 		</div>
-		
+
+		<div class="menu-anchor">
+			<button type="button" aria-label="Subtitles" title="Subtitles" class="material-icon subtitles-btn" aria-haspopup="true" aria-expanded="false">subtitles</button>
+			<div class="menu" id="subtitles-menu" role="menu" hidden>
+				<p class="menu-title" id="subtitles-name">No subtitles loaded</p>
+				<button type="button" role="menuitem" id="subtitles-load"><span class="material-icon" aria-hidden="true">upload_file</span>Load .srt / .vtt file…</button>
+				<button type="button" role="menuitemcheckbox" id="subtitles-toggle" aria-checked="true"><span class="material-icon" aria-hidden="true">check_box</span>Show subtitles <kbd>Y</kbd></button>
+				<div class="menu-row"><span>Delay</span><button type="button" class="step" data-sub-offset="-0.1" aria-label="Show subtitles 0.1 seconds earlier">−</button><output id="subtitles-offset">0.0s</output><button type="button" class="step" data-sub-offset="0.1" aria-label="Show subtitles 0.1 seconds later">+</button></div>
+				<div class="menu-row"><span>Size</span><button type="button" class="step" data-sub-size="-0.1" aria-label="Smaller subtitles">−</button><output id="subtitles-size">100%</output><button type="button" class="step" data-sub-size="0.1" aria-label="Larger subtitles">+</button></div>
+				<input type="file" id="subtitles-input" accept=".srt,.vtt" hidden>
+			</div>
+		</div>
+		<button type="button" aria-label="Playlist" title="Playlist (L)" class="material-icon playlist-btn">playlist_play</button>
+		<button type="button" aria-label="Keyboard shortcuts" title="Shortcuts (?)" class="material-icon help-btn" data-open-shortcuts>keyboard</button>
 		<button type="button" aria-label="Toggle fullscreen" class="material-icon fullscreen-btn">fullscreen</button>
 		<button type="button" aria-label="Toggle zoom" class="material-icon zoom-btn">zoom_out_map</button>
 	</div>
 </div>
+
+<dialog id="shortcuts-dialog" aria-labelledby="shortcuts-dialog-title">
+	<div class="dialog-head">
+		<h2 id="shortcuts-dialog-title">Keyboard shortcuts</h2>
+		<button type="button" class="icon-btn material-icon" id="shortcuts-close" aria-label="Close" autofocus>close</button>
+	</div>
+	<div class="shortcut-groups" id="shortcut-groups"></div>
+</dialog>
+
+<div id="toasts" aria-live="polite"></div>
+</body>
+</html>

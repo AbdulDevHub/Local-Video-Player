@@ -2,17 +2,16 @@
    "manifest_version": 3,
    "name": "Local Video Player",
    "short_name": "Video Player",
-   "description": "Player for local videos with adjustable speed, keyboard shortcuts, progress retrieval and more.",
+   "description": "Private player for local videos and music: resume, playlists, subtitles, 16x speed, 500% volume and 30+ keyboard shortcuts.",
    "author": "Abdul Khan",
-   "version": "2",
-   "offline_enabled": true,
+   "version": "3.0.0",
    "background": {
       "service_worker": "scripts/background.js"
    },
    "icons": {
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png",
-      "192": "icons/favicon.png",
-      "48": "icons/icon48.png"
+      "192": "icons/favicon.png"
    },
    "action": {},
    "commands": {
@@ -21,5 +20,7 @@
             "default": "Alt+V"
          }
       }
-   }
+   },
+   "homepage_url": "https://abduldevhub.github.io/Local-Video-Player/",
+   "minimum_chrome_version": "120"
 }

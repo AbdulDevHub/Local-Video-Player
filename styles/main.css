@@ -5,6 +5,8 @@
 @import "reset.css" layer(reset);
 @import "fonts.css" layer(fonts);
 @import "colors.css" layer(colors);
+@import "landing.css";
+@import "features.css";
 
 :root {
   --hue: 225deg;
@@ -16,9 +18,14 @@
 
 html,
 body,
-#drag-panel,
 .player {
   height: 100%;
+}
+
+html[data-view="home"],
+html[data-view="home"] body {
+  height: auto;
+  min-height: 100%;
 }
 
 .player.hide-cursor {
@@ -28,68 +35,8 @@ body,
 body {
   font: 0.8375rem "JetBrains Mono", monospace;
   overflow-x: hidden;
-}
-
-#drop-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-#drag-panel {
-  display: grid;
-  place-content: center;
-  place-items: center;
-  gap: var(--gap);
-  font-weight: bold;
-  font-size: 2.25rem;
-  color: var(--text2);
-  background-image: radial-gradient(
-    circle at 100% 0,
-    var(--surface1),
-    var(--surface1) 50%,
-    var(--surface3) 75%,
-    var(--surface1) 75%
-  );
-  transition: box-shadow var(--duration);
-
-  &[data-file-hover] {
-    box-shadow: inset 0 0 0.75em 0.25em;
-  }
-
-  & > * {
-    margin-inline: 1em;
-    text-align: center;
-  }
-
-  & #drag-panel-text {
-    margin-bottom: 0.85em;
-    color: hsl(0deg 2.11% 72.97%);
-  }
-
-  & #file-picker {
-    max-inline-size: 20em;
-    font-size: 0.5em;
-    padding: 0.5em;
-    border-radius: 0.5em;
-    color: hsl(0deg 2.11% 72.97%);
-    background: var(--surface2);
-    box-shadow: 0 0 0.5em hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 15%));
-    --spacing: 0.75em;
-    padding-block: calc(var(--spacing) * 0.618);
-    padding-inline: var(--spacing);
-    margin-inline-end: var(--spacing);
-    transition-duration: var(--duration);
-    transition-property: background-color, box-shadow;
-
-    &:hover {
-      background-color: var(--surface1);
-    }
-
-    &:active {
-      box-shadow: none;
-    }
-  }
+  color: var(--text1);
+  background: var(--surface1);
 }
 
 .player {
@@ -97,9 +44,17 @@ body {
   flex-direction: column;
   background-image: radial-gradient(var(--surface4), var(--surface3));
 
+  .stage {
+    position: relative;
+    flex: 1;
+    min-block-size: 0;
+    display: flex;
+  }
+
   & video {
     flex: 1;
     min-block-size: 0;
+    min-inline-size: 0;
     background-color: black;
     transition-duration: var(--duration);
     transition-property: scale, border-radius, border;

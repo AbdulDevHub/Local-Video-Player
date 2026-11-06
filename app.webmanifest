@@ -1,0 +1,35 @@
+{
+  "id": "./",
+  "name": "Local Video Player",
+  "short_name": "Video Player",
+  "description": "Free, private, offline player for the videos and music on your computer. Resume, playlists, subtitles, 16× speed and 500% volume.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#16171b",
+  "theme_color": "#16171b",
+  "orientation": "any",
+  "categories": ["entertainment", "utilities", "productivity"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/favicon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "images/screenshot-home.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Start screen with Continue Watching" },
+    { "src": "images/screenshot-player.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Playing a video with subtitles" }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "video/*": [".mp4", ".m4v", ".mkv", ".webm", ".mov", ".avi", ".ogv", ".ts", ".m2ts", ".mpeg", ".mpg", ".3gp"],
+        "audio/*": [".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".oga", ".opus"]
+      },
+      "launch_type": "single-client"
+    }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
+}

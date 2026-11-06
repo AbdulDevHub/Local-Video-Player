@@ -27,9 +27,15 @@
   --surface-shadow-dark: var(--hue) 50% 3%;
   --shadow-strength-dark: 80%;
 
-  accent-color: var(--main-color);
+  accent-color: var(--video-bar);
+  --video-bar: #f3c669;
+  --accent-2: #5b8cff;
+}
 
-  /*Default Colors -- My Addition*/
+/* Themes: data-theme is set before first paint by scripts/theme-init.js (dark by default) */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --main-color: var(--dark);
   --text1: var(--text1-dark);
   --text2: var(--text2-dark);
@@ -39,33 +45,35 @@
   --surface4: var(--surface4-dark);
   --surface-shadow: var(--surface-shadow-dark);
   --shadow-strength: var(--shadow-strength-dark);
-  --video-bar: #f3c669;
+  --gold-text: #f3c669;
 }
 
-/*@media (prefers-color-scheme: light) {
-	:root {
-		--main-color: var(--light);
-		--text1: var(--text1-light);
-		--text2: var(--text2-light);
-		--surface1: var(--surface1-light);
-		--surface2: var(--surface2-light);
-		--surface3: var(--surface3-light);
-		--surface4: var(--surface4-light);
-		--surface-shadow: var(--surface-shadow-light);
-		--shadow-strength: var(--shadow-strength-light);
-	}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --main-color: var(--light);
+  --text1: var(--text1-light);
+  --text2: var(--text2-light);
+  --surface1: var(--surface1-light);
+  --surface2: var(--surface2-light);
+  --surface3: var(--surface3-light);
+  --surface4: var(--surface4-light);
+  --surface-shadow: var(--surface-shadow-light);
+  --shadow-strength: var(--shadow-strength-light);
+  --gold-text: #8a5a00;
 }
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--main-color: var(--dark);
-		--text1: var(--text1-dark);
-		--text2: var(--text2-dark);
-		--surface1: var(--surface1-dark);
-		--surface2: var(--surface2-dark);
-		--surface3: var(--surface3-dark);
-		--surface4: var(--surface4-dark);
-		--surface-shadow: var(--surface-shadow-dark);
-		--shadow-strength: var(--shadow-strength-dark);
-	}
-}*/
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    color-scheme: light;
+    --main-color: var(--light);
+    --text1: var(--text1-light);
+    --text2: var(--text2-light);
+    --surface1: var(--surface1-light);
+    --surface2: var(--surface2-light);
+    --surface3: var(--surface3-light);
+    --surface4: var(--surface4-light);
+    --surface-shadow: var(--surface-shadow-light);
+    --shadow-strength: var(--shadow-strength-light);
+    --gold-text: #8a5a00;
+  }
+}

@@ -1,0 +1,484 @@
+/* ============================== PLAYER ADD-ONS ============================== */
+
+/* -------- Full-window drop target -------- */
+#drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--surface1) 55%, transparent);
+  backdrop-filter: blur(6px);
+  animation: fade-in 0.15s ease-out;
+
+  & .drop-overlay-box {
+    pointer-events: none; /* keep dragleave firing only when leaving the window */
+    display: grid;
+    place-items: center;
+    gap: 0.5rem;
+    width: min(100% - 4rem, 36rem);
+    padding: 3.5rem 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text1);
+    border: 3px dashed var(--video-bar);
+    border-radius: 1.5rem;
+    background: color-mix(in srgb, var(--surface2) 85%, transparent);
+
+    & .material-icon {
+      font-size: 3.5rem;
+      color: var(--video-bar);
+      animation: float 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+.player[data-file-hover] video {
+  scale: 0.92;
+  border-radius: 1rem;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* -------- Subtitles -------- */
+#subtitle-overlay {
+  --sub-scale: 1;
+  position: absolute;
+  inset: auto 5% 6%;
+  display: grid;
+  justify-items: center;
+  gap: 0.2em;
+  text-align: center;
+  pointer-events: none;
+  font: 600 calc(clamp(1rem, 2.4vw, 2.6rem) * var(--sub-scale)) / 1.3 system-ui, "Segoe UI", sans-serif;
+
+  & span {
+    padding: 0.1em 0.45em;
+    border-radius: 0.2em;
+    color: white;
+    background: rgb(0 0 0 / 0.68);
+    text-shadow: 0 1px 2px black;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+}
+
+/* -------- HUD pill & play/pause pulse -------- */
+#hud {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  translate: -50% -0.5rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: white;
+  background: rgb(15 15 18 / 0.72);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, translate 0.2s;
+
+  &.visible {
+    opacity: 1;
+    translate: -50% 0;
+  }
+
+  & .material-icon {
+    font-size: 1.35rem;
+    color: var(--video-bar);
+  }
+}
+
+#pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  color: white;
+  background: rgb(0 0 0 / 0.5);
+  opacity: 0;
+  pointer-events: none;
+
+  & .material-icon {
+    font-size: 2.75rem;
+    font-variation-settings: "FILL" 1;
+  }
+
+  &.animate {
+    animation: pulse 0.6s ease-out;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.9;
+    scale: 0.7;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.3;
+  }
+}
+
+/* -------- Playlist drawer -------- */
+#playlist-panel {
+  position: absolute;
+  inset: 0.75rem 0.75rem 0.75rem auto;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: min(22rem, 100% - 1.5rem);
+  border-radius: 1rem;
+  color: var(--text1);
+  background: color-mix(in srgb, var(--surface2) 88%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.45);
+  animation: slide-in 0.25s ease-out;
+
+  & .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.5rem 0.75rem 1rem;
+    border-bottom: 1px solid var(--surface4);
+
+    & h2 {
+      flex: 1;
+      font-size: 0.95rem;
+    }
+
+    & #playlist-count {
+      margin-inline-start: 0.4rem;
+      font-weight: 400;
+      color: var(--text2);
+    }
+  }
+
+  & ol {
+    list-style: none;
+    overflow-y: auto;
+    padding: 0.4rem;
+  }
+
+  & li {
+    display: flex;
+    align-items: center;
+    border-radius: 0.6rem;
+
+    &:hover {
+      background: var(--surface3);
+    }
+  }
+
+  & .playlist-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.6rem;
+    text-align: start;
+
+    & .num {
+      min-width: 2ch;
+      color: var(--text2);
+      text-align: end;
+    }
+
+    & .name {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    &[aria-current] {
+      color: var(--gold-text);
+      font-weight: 700;
+
+      & .num {
+        color: inherit;
+      }
+    }
+  }
+
+  & .remove {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    border-radius: 50%;
+    opacity: 0;
+
+    &:hover {
+      background: var(--surface4);
+    }
+  }
+
+  & li:is(:hover, :focus-within) .remove {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    translate: 1rem 0;
+  }
+}
+
+/* -------- Controls additions -------- */
+.player .controls {
+  & button.active {
+    color: var(--video-bar);
+  }
+
+  & .menu-anchor {
+    position: relative;
+    display: flex;
+  }
+}
+
+#loop-range {
+  position: absolute;
+  inset-block-start: 0;
+  translate: 0 -50%;
+  z-index: 1;
+  height: 0.55rem;
+  pointer-events: none;
+  border-inline: 2px solid var(--video-bar);
+  background: color-mix(in srgb, var(--video-bar) 35%, transparent);
+
+  &.partial {
+    border-inline-end: none;
+    background: none;
+  }
+}
+
+/* -------- Subtitles menu -------- */
+.menu {
+  position: absolute;
+  inset: auto -4rem calc(100% + 0.75rem) auto;
+  z-index: 5;
+  display: grid;
+  gap: 0.15rem;
+  width: 17rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
+  color: var(--text1);
+  background: var(--surface2);
+  border: 1px solid var(--surface4);
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 0.45);
+  animation: fade-in 0.15s ease-out;
+
+  .player .controls & > * {
+    height: auto;
+  }
+
+  & .menu-title {
+    padding: 0.4rem 0.6rem 0.6rem;
+    font-size: 0.75rem;
+    color: var(--text2);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .player .controls & > button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 0.6rem;
+    text-align: start;
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    & kbd {
+      margin-inline-start: auto;
+    }
+  }
+
+  & .menu-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.6rem;
+
+    & span {
+      flex: 1;
+    }
+
+    & output {
+      min-width: 5ch;
+      text-align: center;
+    }
+
+    .player .controls & .step {
+      width: 1.9rem;
+      height: 1.9rem;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      background: var(--surface3);
+    }
+  }
+}
+
+/* -------- Shortcuts dialog -------- */
+#shortcuts-dialog {
+  margin: auto;
+  width: min(100% - 2rem, 60rem);
+  max-height: min(100% - 2rem, 46rem);
+  padding: 0;
+  border: 1px solid var(--surface4);
+  border-radius: 1.25rem;
+  color: var(--text1);
+  background: var(--surface2);
+  box-shadow: 0 2rem 5rem rgb(0 0 0 / 0.5);
+
+  &[open] {
+    animation: pop-in 0.2s ease-out;
+  }
+
+  &::backdrop {
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(4px);
+  }
+
+  & .dialog-head {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1rem 1rem 1.5rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--surface4);
+
+    & h2 {
+      font-size: 1.1rem;
+    }
+  }
+
+  & .shortcut-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+    gap: 1.5rem 2rem;
+    padding: 1.5rem;
+  }
+
+  & h3 {
+    margin-bottom: 0.6rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-text);
+  }
+
+  & dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.45rem 1rem;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  & dt {
+    white-space: nowrap;
+    color: var(--text2);
+  }
+
+  & dd {
+    color: var(--text2);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+/* -------- Toasts -------- */
+#toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 5.5rem;
+  translate: -50% 0;
+  z-index: 20;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: min(90vw, 34rem);
+  padding: 0.7rem 0.8rem 0.7rem 1.1rem;
+  font-size: 0.875rem;
+  border-radius: 0.8rem;
+  color: #f2f2f4;
+  background: rgb(24 24 28 / 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.35);
+  pointer-events: auto;
+  opacity: 0;
+  translate: 0 0.75rem;
+  transition: opacity 0.25s, translate 0.25s;
+
+  &.visible {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  & button {
+    padding: 0.35rem 0.75rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    color: #f3c669;
+
+    &:hover {
+      background: rgb(255 255 255 / 0.1);
+    }
+  }
+}
+
+/* -------- Narrow screens -------- */
+@media (max-width: 760px) {
+  .player .controls {
+    --spacing: 0.4rem;
+    gap: 0.15rem;
+
+    & .rewind-btn,
+    & .forward-btn,
+    & .zoom-btn,
+    & .help-btn,
+    & #file-name-container {
+      display: none;
+    }
+
+    & .speed-control-container .speed-btn {
+      display: none;
+    }
+  }
+}

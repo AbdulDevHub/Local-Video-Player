@@ -1,8 +1,14 @@
-"use strict"
+// Core player: playback, speed, volume, fullscreen/stretch, seeking and saved progress.
+// Feature modules (library, playlist, subtitles, tools…) hook in through `bus` and the exports.
+import { extractCoverImage } from "./cover.js"
+
+// Fires "media:loaded" ({ file, handle, key, coverBlob }) whenever a new file starts loading
+export const bus = new EventTarget()
+export const STORAGE_PREFIX = "lvp:"
 
 // ----------------------------- GLOBAL VARIABLES -----------------------------
-const preferences = { timeSkip: 10 }
-const state = {
+export const preferences = { timeSkip: 10 }
+export const state = {
   localStorageKey: null,
   stretchedFullscreenActive: false,
   pressedGKey: false,
@@ -36,17 +42,14 @@ const state = {
   isOnPreset: true,
 }
 
-const PRESET_SPEEDS = [1.0, 1.5, 2.0, 2.5, 3.0, 4.0]
+export const PRESET_SPEEDS = [1.0, 1.5, 2.0, 2.5, 3.0, 4.0]
 
-const elements = {
+export const elements = {
   dragPanel: document.querySelector("#drag-panel"),
-  dropOverlay: document.querySelector("#drop-overlay"),
-  droppableElements: document.querySelectorAll(".droppable"),
   fileName: document.querySelector("#file-name"),
-  video: document.querySelector("video"),
+  video: document.querySelector("#main-video"),
   seekerPreview: document.querySelector("#seeker-preview"),
   previewVideo: document.querySelector("#preview-video"),
-  filePicker: document.querySelector("#file-picker"),
   player: document.querySelector(".player"),
   playBtn: document.querySelector(".play-btn"),
   fullscreenBtn: document.querySelector(".fullscreen-btn"),
@@ -70,8 +73,12 @@ const elements = {
 }
 
 // ----------------------------- UTILITIES -----------------------------
-const utils = {
+export const utils = {
   clamp: (min, value, max) => Math.min(Math.max(value, min), max),
+
+  hasMedia: () => Boolean(elements.video.getAttribute("src")),
+
+  isOverlayOpen: () => Boolean(document.querySelector("dialog[open], [data-overlay-open]")),
 
   async hashFile(file) {
     const hashBuffer = await crypto.subtle.digest(
@@ -117,7 +124,28 @@ const utils = {
 }
 
 // ----------------------------- LOCAL STORAGE MANAGEMENT -----------------------------
-const storage = {
+// Video states live under "lvp:<hash>" so they never clash with other apps on the same origin
+// (e.g. other GitHub Pages projects on the same domain).
+export const storage = {
+  read(key) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key))
+      return value && typeof value.timer === "number" ? value : null
+    } catch {
+      return null
+    }
+  },
+
+  // Moves states saved by v2 (bare SHA-1 keys) under the namespaced prefix
+  migrate() {
+    Object.keys(localStorage).forEach((key) => {
+      if (!/^[0-9a-f]{40}$/.test(key)) return
+      const value = storage.read(key)
+      if (value) localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value))
+      localStorage.removeItem(key)
+    })
+  },
+
   save() {
     const videoState = {
       timer: elements.video.currentTime,
@@ -129,7 +157,8 @@ const storage = {
   },
 
   restore() {
-    let videoState = JSON.parse(localStorage.getItem(state.localStorageKey))
+    const videoState = storage.read(state.localStorageKey)
+    if (!videoState) return
     elements.video.currentTime = videoState.timer
     elements.video.playbackRate = videoState.playbackRate
     state.currentSpeed = videoState.playbackRate
@@ -140,8 +169,9 @@ const storage = {
     console.log("Video states over 30 days will be cleaned up.")
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
     Object.keys(localStorage).forEach((key) => {
-      const videoState = JSON.parse(localStorage.getItem(key))
-      if (new Date(videoState.last_opened) < new Date(thirtyDaysAgo)) {
+      if (!key.startsWith(STORAGE_PREFIX)) return
+      const videoState = storage.read(key)
+      if (videoState && new Date(videoState.last_opened) < new Date(thirtyDaysAgo)) {
         // Reset timer to 0, keep playbackRate, update last_opened
         const updatedState = {
           timer: 0,
@@ -155,7 +185,7 @@ const storage = {
 }
 
 // ----------------------------- VIDEO CONTROLS -----------------------------
-const videoControls = {
+export const videoControls = {
   togglePlay() {
     elements.video.paused ? elements.video.play() : elements.video.pause()
   },
@@ -313,7 +343,7 @@ const videoControls = {
 }
 
 // ----------------------------- FULLSCREEN HANDLING -----------------------------
-const fullscreenHandler = {
+export const fullscreenHandler = {
   async toggle() {
     if (document.fullscreenElement) {
       await document.exitFullscreen()
@@ -342,7 +372,7 @@ const fullscreenHandler = {
 }
 
 // ----------------------------- VIDEO STRETCHING -----------------------------
-const videoStretching = {
+export const videoStretching = {
   getStretchMode() {
     const aspect = elements.video.videoWidth / elements.video.videoHeight
     const hasHiddenControls = elements.controls.classList.contains("hidden")
@@ -387,18 +417,12 @@ const videoStretching = {
 }
 
 // ----------------------------- EVENT HANDLERS -----------------------------
-const eventHandlers = {
-  handleDrop: async (e) => {
-    e.preventDefault()
-    const fileHandle = await e.dataTransfer.items[0].getAsFileSystemHandle()
-    fileManagement.processFile(fileHandle)
-    fileManagement.handleDragEnd()
-    console.info(`A ${e.dataTransfer.items[0].type} file was dropped.`)
-  },
-
+export const eventHandlers = {
   handleKeyboardShortcuts: (e) => {
     // Ignore key presses when a modifier key is pressed
     if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return
+    // Player shortcuts only apply while a video is open and no dialog/menu is in front of it
+    if (!utils.hasMedia() || utils.isOverlayOpen()) return
     if (e.key !== " ") document.activeElement.blur()
 
     const keyActions = {
@@ -406,6 +430,7 @@ const eventHandlers = {
         // Toggle play
         if (document.activeElement.tagName !== "BUTTON") videoControls.togglePlay()
       },
+      k: () => videoControls.togglePlay(),
       g: () => {
         // Toggle stretched full screen
         state.pressedGKey = true
@@ -558,106 +583,68 @@ const eventHandlers = {
 }
 
 // ----------------------------- FILE MANAGEMENT -----------------------------
-const fileManagement = {
-  async processFile(fileHandle) {
-    const file = await fileHandle.getFile()
+// A "source" is { file, handle? }: the handle (Chromium only) lets the library reopen it later.
+export const fileManagement = {
+  async processFile(source) {
+    // Quick successive loads (e.g. pressing N twice) must not finish out of order
+    const token = (state.loadToken = (state.loadToken ?? 0) + 1)
+    const file = source.file ?? (await source.handle.getFile())
+    const hash = await utils.hashFile(file)
+    if (token !== state.loadToken) return
 
-    if (elements.video.src) {
+    if (utils.hasMedia()) {
       console.info("Video changed, saving old video in storage…")
-      storage.save()
+      if (!elements.video.ended) storage.save()
+      bus.dispatchEvent(new CustomEvent("media:closing"))
       URL.revokeObjectURL(elements.video.src)
     } else {
       elements.dragPanel.hidden = true
       elements.player.hidden = false
+      document.documentElement.dataset.view = "player"
     }
 
-    state.localStorageKey = await utils.hashFile(file)
+    state.localStorageKey = STORAGE_PREFIX + hash
     elements.video.src = URL.createObjectURL(file)
     elements.fileName.textContent = file.name.replace(/\.[^.]+$/, "")
+    document.title = `${elements.fileName.textContent} · Local Video Player`
 
     // Show the embedded cover image (e.g. MP3 album art) for audio files
-    if (elements.video.poster) URL.revokeObjectURL(elements.video.poster)
+    if (state.coverUrl) URL.revokeObjectURL(state.coverUrl)
     elements.video.removeAttribute("poster")
     state.coverUrl = null
-    const cover = await fileManagement.extractCoverImage(file)
-    if (cover) {
-      state.coverUrl = URL.createObjectURL(cover)
+    const coverBlob = await extractCoverImage(file)
+    if (token !== state.loadToken) return
+    if (coverBlob) {
+      state.coverUrl = URL.createObjectURL(coverBlob)
       elements.video.poster = state.coverUrl
     }
 
+    bus.dispatchEvent(
+      new CustomEvent("media:loaded", { detail: { file, handle: source.handle, key: hash, coverBlob } })
+    )
     fileManagement.updateMediaSession()
   },
 
-  // Reads the attached picture (APIC frame) from an MP3's ID3v2 tag
-  async extractCoverImage(file) {
-    try {
-      const head = new Uint8Array(await file.slice(0, 10).arrayBuffer())
-      if (String.fromCharCode(...head.slice(0, 3)) !== "ID3") return null
-
-      const version = head[3]
-      const tagSize = ((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f)
-      const tag = new Uint8Array(await file.slice(10, 10 + tagSize).arrayBuffer())
-      const view = new DataView(tag.buffer)
-      const latin1 = (start, end) => String.fromCharCode(...tag.slice(start, end))
-
-      let pos = 0
-      // Skip extended header if present
-      if (head[5] & 0x40) {
-        pos = version === 4 ? ((tag[0] & 0x7f) << 21) | ((tag[1] & 0x7f) << 14) | ((tag[2] & 0x7f) << 7) | (tag[3] & 0x7f) : view.getUint32(0) + 4
-      }
-
-      const idLength = version === 2 ? 3 : 4
-      const headerLength = version === 2 ? 6 : 10
-      while (pos + headerLength <= tag.length) {
-        const id = latin1(pos, pos + idLength)
-        if (!/^[A-Z0-9]+$/.test(id)) break
-
-        let size
-        if (version === 2) size = (tag[pos + 3] << 16) | (tag[pos + 4] << 8) | tag[pos + 5]
-        else if (version === 4)
-          size = ((tag[pos + 4] & 0x7f) << 21) | ((tag[pos + 5] & 0x7f) << 14) | ((tag[pos + 6] & 0x7f) << 7) | (tag[pos + 7] & 0x7f)
-        else size = view.getUint32(pos + 4)
-
-        if (id === "APIC" || id === "PIC") {
-          const start = pos + headerLength
-          const end = start + size
-          const encoding = tag[start]
-          let i = start + 1
-          let mime = "image/jpeg"
-          if (id === "PIC") {
-            const format = latin1(i, i + 3).toLowerCase()
-            mime = format === "png" ? "image/png" : "image/jpeg"
-            i += 3
-          } else {
-            let mimeEnd = i
-            while (mimeEnd < end && tag[mimeEnd] !== 0) mimeEnd++
-            const parsed = latin1(i, mimeEnd)
-            if (parsed.startsWith("image/")) mime = parsed
-            i = mimeEnd + 1
-          }
-          i += 1 // picture type
-          // Skip description (null-terminated; double null for UTF-16)
-          const wide = encoding === 1 || encoding === 2
-          while (i < end) {
-            if (wide) {
-              if (tag[i] === 0 && tag[i + 1] === 0) {
-                i += 2
-                break
-              }
-              i += 2
-            } else if (tag[i++] === 0) break
-          }
-          return new Blob([tag.slice(i, end)], { type: mime })
-        }
-        pos += headerLength + size
-      }
-    } catch (error) {
-      console.info("Could not read cover image:", error)
-    }
-    return null
+  // Saves progress, unloads the video and goes back to the start screen
+  close() {
+    if (!utils.hasMedia()) return
+    if (document.fullscreenElement) document.exitFullscreen()
+    if (!elements.video.ended) storage.save()
+    bus.dispatchEvent(new CustomEvent("media:closing"))
+    elements.video.pause()
+    URL.revokeObjectURL(elements.video.src)
+    elements.video.removeAttribute("src")
+    elements.video.removeAttribute("poster")
+    elements.video.load()
+    elements.player.hidden = true
+    elements.dragPanel.hidden = false
+    document.documentElement.dataset.view = "home"
+    document.title = state.homeTitle
+    bus.dispatchEvent(new CustomEvent("media:closed"))
   },
 
   updateMediaSession() {
+    if (!("mediaSession" in navigator)) return
     if (state.coverUrl) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: elements.fileName.textContent,
@@ -678,48 +665,13 @@ const fileManagement = {
     }
 
     // Bind global media controls to video
-    navigator.mediaSession.setActionHandler("seekbackward", () => videoControls.rewind)
-    navigator.mediaSession.setActionHandler("seekforward", () => videoControls.forward)
-  },
-
-  handleDragEnter(e) {
-    if (e.dataTransfer.items[0].type.startsWith("video/")) {
-      e.target.dataset.fileHover = true
-      elements.dropOverlay.hidden = false
-      console.info(`A video file has entered #${e.target.id}'s dragging area.`)
-    }
-  },
-
-  handleDragEnd() {
-    elements.dropOverlay.hidden = true
-    elements.droppableElements.forEach((el) => delete el.dataset.fileHover)
-    console.info("The drag event has ended. The drop overlay was hidden.")
-  },
-
-  async openFilePicker() {
-    try {
-      const [fileHandle] = await window.showOpenFilePicker({
-        excludeAcceptAllOption: true,
-        types: [
-          {
-            description: "Videos",
-            accept: {
-              "video/*": [".avi", ".mp4", ".mpeg", ".ogv", ".ts", ".webm", ".3gp", ".3g2", ".mkv"],
-              "audio/*": [".mp3", ".wav", ".ogg"],
-            },
-          },
-        ],
-        multiple: false,
-      })
-      fileManagement.processFile(fileHandle)
-    } catch {
-      console.info("The user cancelled the file picker.")
-    }
+    navigator.mediaSession.setActionHandler("seekbackward", videoControls.rewind)
+    navigator.mediaSession.setActionHandler("seekforward", videoControls.forward)
   },
 }
 
 // ----------------------------- ZOOM CONTROLS -----------------------------
-const zoomControls = {
+export const zoomControls = {
   toggle() {
     zoomControls.toggleControls()
     if (state.stretchedFullscreenActive) {
@@ -745,7 +697,7 @@ const zoomControls = {
 }
 
 // ----------------------------- CURSOR HIDING -----------------------------
-const cursorHandler = {
+export const cursorHandler = {
   setupCursorHiding() {
     const video = elements.video
     const player = elements.player
@@ -782,7 +734,7 @@ const cursorHandler = {
 }
 
 // ----------------------------- SEEK CONTROLS -----------------------------
-const seekerControls = {
+export const seekerControls = {
   seek() {
     elements.video.currentTime =
       (elements.progressBar.valueAsNumber * elements.video.duration) / 100
@@ -1037,9 +989,13 @@ const seekerControls = {
 
 // ----------------------------- INITIALIZATION -----------------------------
 function initializeVideo() {
-  localStorage.getItem(state.localStorageKey)
-    ? storage.restore()
-    : console.info("No video state found in local storage.")
+  const saved = storage.read(state.localStorageKey)
+  if (saved) {
+    storage.restore()
+    if (saved.timer > 5) {
+      bus.dispatchEvent(new CustomEvent("media:resumed", { detail: { time: saved.timer } }))
+    }
+  } else console.info("No video state found in local storage.")
   videoControls.updateProgressBarValue()
   videoControls.updateIndicators()
   elements.duration.textContent = utils.secondsToTime(elements.video.duration)
@@ -1068,13 +1024,9 @@ function initializePreviewSystem() {
 
 function initializeEventListeners() {
   // ============= FILE HANDLING EVENTS =============
-  elements.droppableElements.forEach((droppable) => {
-    droppable.addEventListener("dragenter", fileManagement.handleDragEnter)
-  })
-  elements.dropOverlay.addEventListener("dragover", (e) => e.preventDefault())
-  elements.dropOverlay.addEventListener("drop", eventHandlers.handleDrop)
-  elements.dropOverlay.addEventListener("dragleave", fileManagement.handleDragEnd)
-  elements.filePicker.addEventListener("click", fileManagement.openFilePicker)
+  // Dropping/picking files lives in files.js; here we only keep the start-screen title around
+  state.homeTitle = document.title
+  storage.migrate()
 
   // ============= VIDEO CONTROL EVENTS =============
   elements.playBtn.onclick = elements.video.onclick = videoControls.togglePlay
@@ -1125,7 +1077,7 @@ function initializeEventListeners() {
 
   // Reset video position to 0 upon video end, but preserve playback rate
   elements.video.onended = () => {
-    const currentState = JSON.parse(localStorage.getItem(state.localStorageKey))
+    const currentState = storage.read(state.localStorageKey)
     if (currentState) {
       const updatedState = {
         timer: 0,

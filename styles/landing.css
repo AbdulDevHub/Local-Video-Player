@@ -1,0 +1,583 @@
+/* ============================== START SCREEN ============================== */
+.landing {
+  --max: 72rem;
+  --radius: 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: var(--text1);
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, color-mix(in srgb, var(--video-bar) 14%, transparent), transparent 70%),
+    radial-gradient(50rem 30rem at -10% 30%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 70%),
+    var(--surface1);
+
+  & main {
+    flex: 1;
+    width: min(100% - 2rem, var(--max));
+    margin-inline: auto;
+  }
+
+  & a {
+    color: inherit;
+  }
+
+  & h2 {
+    font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+  }
+
+  & section {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    scroll-margin-top: 4rem;
+  }
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0.1em 0.45em;
+  margin-inline: 0.1em;
+  font: inherit;
+  font-size: 0.85em;
+  text-align: center;
+  border-radius: 0.35em;
+  color: var(--text1);
+  background: var(--surface3);
+  box-shadow: inset 0 -2px 0 var(--surface4);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.75em 1.2em;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 999px;
+  color: var(--text1);
+  background: var(--surface3);
+  border: 1px solid var(--surface4);
+  transition: transform 0.15s, background-color 0.2s, box-shadow 0.2s;
+
+  & .material-icon {
+    font-size: 1.25em;
+  }
+
+  &:hover {
+    background: var(--surface4);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--video-bar);
+    outline-offset: 3px;
+  }
+
+  &.primary {
+    color: #1b1406;
+    background: linear-gradient(135deg, #f7d488, #f3c669 50%, #e8a93a);
+    border-color: transparent;
+    box-shadow: 0 0.5rem 1.5rem -0.5rem color-mix(in srgb, var(--video-bar) 70%, transparent);
+
+    &:hover {
+      box-shadow: 0 0.75rem 2rem -0.5rem color-mix(in srgb, var(--video-bar) 90%, transparent);
+    }
+  }
+
+  &.ghost {
+    background: transparent;
+  }
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--surface3);
+  }
+}
+
+.link-btn {
+  color: var(--text2);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    color: var(--text1);
+  }
+}
+
+/* -------- Header -------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem max(1rem, (100% - 72rem) / 2);
+  background: color-mix(in srgb, var(--surface1) 75%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in srgb, var(--surface4) 50%, transparent);
+
+  & .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  & nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    & a {
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 0.9rem;
+
+      &:hover {
+        color: var(--text1);
+        background: var(--surface3);
+      }
+    }
+  }
+}
+
+/* -------- Hero & drop zone -------- */
+.hero {
+  text-align: center;
+
+  & .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    border-radius: 999px;
+    color: var(--gold-text);
+    background: color-mix(in srgb, var(--video-bar) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--video-bar) 30%, transparent);
+
+    & .material-icon {
+      font-size: 1rem;
+    }
+  }
+
+  & h1 {
+    max-width: 22ch;
+    margin: 1.25rem auto 1rem;
+    font-size: clamp(2rem, 5.5vw, 3.6rem);
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+
+    & em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--video-bar), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  }
+
+  & .lede {
+    max-width: 60ch;
+    margin: 0 auto 2.25rem;
+    color: var(--text2);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+}
+
+.drop-zone {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 3.5rem) 1.25rem;
+  border-radius: 1.5rem;
+  border: 2px dashed color-mix(in srgb, var(--text2) 35%, transparent);
+  background: color-mix(in srgb, var(--surface2) 70%, transparent);
+  box-shadow: 0 2rem 4rem -2rem hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 10%));
+  transition: border-color 0.25s, transform 0.25s, background-color 0.25s;
+
+  .landing[data-file-hover] & {
+    border-color: var(--video-bar);
+    background: color-mix(in srgb, var(--video-bar) 8%, var(--surface2));
+    transform: scale(1.015);
+  }
+
+  & .drop-icon {
+    font-size: 3rem;
+    color: var(--video-bar);
+    animation: float 3.5s ease-in-out infinite;
+  }
+
+  & .drop-title {
+    font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+    font-weight: 700;
+  }
+
+  & .drop-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  & .drop-hint {
+    color: var(--text2);
+    font-size: 0.85rem;
+  }
+}
+
+@keyframes float {
+  50% {
+    translate: 0 -6px;
+  }
+}
+
+.hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+}
+
+/* -------- Continue watching -------- */
+.landing .shelf {
+  padding-top: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  & h2 {
+    margin-bottom: 1rem;
+  }
+}
+
+.shelf-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+  gap: 1rem;
+}
+
+.cw-card {
+  position: relative;
+
+  & .cw-open {
+    display: grid;
+    gap: 0.35rem;
+    width: 100%;
+    text-align: start;
+    border-radius: var(--radius);
+
+    &:focus-visible {
+      outline: 2px solid var(--video-bar);
+      outline-offset: 4px;
+    }
+  }
+
+  & .cw-thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--surface3), var(--surface4));
+    box-shadow: 0 0.75rem 1.5rem -0.75rem hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 10%));
+
+    & img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: scale 0.4s;
+    }
+  }
+
+  & .cw-fallback {
+    font-size: 2.5rem;
+    color: var(--text2);
+  }
+
+  & .cw-play {
+    position: absolute;
+    font-size: 3rem;
+    color: white;
+    opacity: 0;
+    scale: 0.8;
+    filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.6));
+    font-variation-settings: "FILL" 1;
+    transition: opacity 0.25s, scale 0.25s;
+  }
+
+  & .cw-progress {
+    position: absolute;
+    inset: auto 0 0;
+    height: 4px;
+    background: linear-gradient(to right, var(--video-bar) var(--p), rgb(255 255 255 / 0.25) var(--p));
+  }
+
+  & .cw-open:is(:hover, :focus-visible) {
+    & img {
+      scale: 1.05;
+    }
+
+    & .cw-play {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  & .cw-name {
+    margin-top: 0.25rem;
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  & .cw-meta {
+    font-size: 0.8rem;
+    color: var(--text2);
+  }
+
+  & .cw-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
+    border-radius: 50%;
+    color: white;
+    background: rgb(0 0 0 / 0.55);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  &:is(:hover, :focus-within) .cw-remove {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    & .cw-remove {
+      opacity: 1;
+    }
+  }
+}
+
+/* -------- Features -------- */
+.features h2 {
+  max-width: 30ch;
+}
+
+.feature-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(15.5rem, 100%), 1fr));
+  gap: 1rem;
+
+  & li {
+    padding: 1.4rem;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--surface2) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--surface4) 60%, transparent);
+    transition: transform 0.25s, border-color 0.25s;
+
+    &:hover {
+      transform: translateY(-3px);
+      border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
+    }
+  }
+
+  & .material-icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.75rem;
+    font-size: 1.5rem;
+    color: var(--gold-text);
+    background: color-mix(in srgb, var(--video-bar) 14%, transparent);
+  }
+
+  & h3 {
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+  }
+
+  & p {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text2);
+  }
+}
+
+/* -------- Shortcuts teaser -------- */
+.shortcuts-teaser {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+
+  & > div > p {
+    color: var(--text2);
+    margin-bottom: 1rem;
+  }
+
+  & h2 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.key-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.6rem 2rem;
+  font-size: 0.9rem;
+  color: var(--text2);
+
+  & kbd {
+    margin-inline-end: 0.35rem;
+  }
+}
+
+/* -------- FAQ -------- */
+.faq {
+  max-width: 50rem;
+
+  & details {
+    border-bottom: 1px solid var(--surface4);
+  }
+
+  & summary {
+    padding: 1.1rem 0;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+
+    &::after {
+      content: "add";
+      font: 300 1.4rem / 1 "Material Symbols";
+      transition: rotate 0.25s;
+    }
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  & details[open] summary::after {
+    rotate: 45deg;
+  }
+
+  & p {
+    padding-bottom: 1.1rem;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+}
+
+/* -------- Footer -------- */
+.site-footer {
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text2);
+  border-top: 1px solid color-mix(in srgb, var(--surface4) 50%, transparent);
+}
+
+/* Extension start screen: no website-only promos */
+[data-context="extension"] .web-only {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .site-header nav a:not([href^="http"]) {
+    display: none;
+  }
+
+  .site-header .brand span {
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing *,
+  .landing *::before,
+  .landing *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Light themes: deeper gradient so the highlighted words keep their contrast */
+:root[data-theme="light"] .hero h1 em {
+  background-image: linear-gradient(90deg, #b07408, #3558d8);
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] .hero h1 em {
+    background-image: linear-gradient(90deg, #b07408, #3558d8);
+  }
+}
+
+/* Returning visitors: tighten the hero so Continue watching sits closer to the fold */
+.landing:has(#continue-watching:not([hidden])) .hero {
+  padding-bottom: 2rem;
+
+  & .lede {
+    margin-bottom: 1.5rem;
+  }
+
+  & .drop-zone {
+    padding-block: 1.5rem;
+    gap: 0.6rem;
+  }
+
+  & .drop-icon {
+    display: none;
+  }
+
+  & h1 {
+    margin-block: 1rem 0.75rem;
+    font-size: clamp(1.75rem, 4.5vw, 3rem);
+  }
+}
