@@ -26,7 +26,7 @@ export const hud = {
 // toast("Saved", { action: { label: "Undo", onClick }, timeout: 5000 })
 export function toast(text, { action, timeout = 4000 } = {}) {
   // Fullscreen hides everything outside the fullscreen element, so follow it there
-  const host = document.fullscreenElement ?? document.body
+  const host = document.fullscreenElement === document.documentElement ? document.body : (document.fullscreenElement ?? document.body)
   if (toastsEl.parentElement !== host) host.append(toastsEl)
 
   const el = document.createElement("div")

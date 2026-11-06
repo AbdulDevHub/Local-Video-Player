@@ -276,9 +276,10 @@ export const videoControls = {
   },
 
   cyclePresetSpeed() {
-    // Pick the next preset above the *actual* speed, so restored or manually adjusted speeds
-    // can never leave a stale index behind (which used to repeat a preset)
-    const next = PRESET_SPEEDS.find((preset) => preset > elements.video.playbackRate + 0.01)
+    // Pick the next preset above the shown speed (kept in sync with ratechange), so restored or
+    // manually adjusted speeds never leave a stale index behind. Not video.playbackRate: speed
+    // extensions on the website can change it behind our back, which made 4× repeat.
+    const next = PRESET_SPEEDS.find((preset) => preset > state.currentSpeed + 0.01)
     state.currentSpeed = next ?? PRESET_SPEEDS[0]
     state.currentPresetIndex = PRESET_SPEEDS.indexOf(state.currentSpeed)
     state.isOnPreset = true
@@ -353,7 +354,7 @@ export const videoControls = {
 // ----------------------------- FULLSCREEN HANDLING -----------------------------
 export const fullscreenHandler = {
   async toggle() {
-    if (document.fullscreenElement) {
+    if (document.fullscreenElement === elements.player) {
       await document.exitFullscreen()
       if (elements.controls.classList.contains("hidden")) {
         elements.controls.classList.remove("hidden")
@@ -616,6 +617,10 @@ export const fileManagement = {
       elements.dragPanel.hidden = true
       elements.player.hidden = false
       document.documentElement.dataset.view = "player"
+      // Opened from a fullscreen start screen: hand fullscreen back to the player
+      if (document.fullscreenElement === document.documentElement) {
+        elements.player.requestFullscreen().catch(() => {})
+      }
     }
 
     state.localStorageKey = STORAGE_PREFIX + hash
@@ -644,7 +649,11 @@ export const fileManagement = {
   // Saves progress, unloads the video and goes back to the start screen
   close() {
     if (!utils.hasMedia()) return
-    if (document.fullscreenElement) document.exitFullscreen()
+    // Stay fullscreen: move it from the (now hidden) player to the whole page
+    if (document.fullscreenElement === elements.player) {
+      fullscreenHandler.handleExit()
+      document.documentElement.requestFullscreen().catch(() => document.exitFullscreen())
+    }
     if (!elements.video.ended) storage.save()
     bus.dispatchEvent(new CustomEvent("media:closing"))
     elements.video.pause()

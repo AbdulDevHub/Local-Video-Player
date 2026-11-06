@@ -94,7 +94,7 @@ function build() {
 export const shortcutsDialog = {
   open() {
     // Inside fullscreen only the fullscreen element is visible, so move the dialog there
-    const host = document.fullscreenElement ?? document.body
+    const host = document.fullscreenElement === document.documentElement ? document.body : (document.fullscreenElement ?? document.body)
     if (dialog.parentElement !== host) host.append(dialog)
     if (!dialog.open) dialog.showModal()
   },

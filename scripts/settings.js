@@ -112,7 +112,7 @@ export function initSettings({ getTheme, setTheme }) {
   document.querySelectorAll("[data-open-settings]").forEach((button) =>
     button.addEventListener("click", () => {
       fill()
-      const host = document.fullscreenElement ?? document.body
+      const host = document.fullscreenElement === document.documentElement ? document.body : (document.fullscreenElement ?? document.body)
       if (dialog.parentElement !== host) host.append(dialog)
       dialog.showModal()
     })
