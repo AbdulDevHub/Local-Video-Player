@@ -52,7 +52,7 @@
   "isAccessibleForFree": true,
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": { "@type": "Person", "name": "Abdul Khan", "url": "https://github.com/AbdulDevHub" },
-  "softwareVersion": "3.0.0",
+  "softwareVersion": "3.1.0",
   "license": "https://opensource.org/licenses/MIT",
   "featureList": [
     "Plays MP4, MKV, WebM, MOV, MP3, WAV, FLAC and more without uploading",
@@ -111,15 +111,18 @@
 			<span>Local Video Player</span>
 		</a>
 		<nav aria-label="Main">
-			<a href="#features">Features</a>
-			<a href="#shortcuts">Shortcuts</a>
-			<a href="#faq" class="web-only">FAQ</a>
-			<a href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank">GitHub</a>
+			<button type="button" class="nav-link" data-open-about="features">Features</button>
+			<button type="button" class="nav-link" data-open-shortcuts>Shortcuts</button>
+			<button type="button" class="nav-link web-only" data-open-about="faq">FAQ</button>
+			<a class="nav-link web-only" href="https://github.com/AbdulDevHub/Local-Video-Player#install-the-chrome-extension" rel="noopener" target="_blank">Extension</a>
+			<a class="nav-link" href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank">GitHub</a>
+			<button type="button" class="btn small web-only" id="install-btn" hidden><span class="material-icon" aria-hidden="true">install_desktop</span>Install</button>
+			<button type="button" class="icon-btn material-icon" data-open-settings aria-label="Settings" title="Settings">settings</button>
 			<button type="button" class="icon-btn material-icon" id="theme-btn" aria-label="Change theme" title="Theme">dark_mode</button>
 		</nav>
 	</header>
 
-	<main>
+	<main class="home">
 		<section class="hero" aria-labelledby="hero-title">
 			<p class="eyebrow"><span class="material-icon" aria-hidden="true">lock</span> 100% private · works offline · no uploads</p>
 			<h1 id="hero-title">Play any video on your computer, <em>right in your browser</em>.</h1>
@@ -136,10 +139,6 @@
 				<input type="file" id="file-input" multiple hidden accept="video/*,audio/*,.mkv,.ts,.m2ts,.flac,.srt,.vtt">
 				<input type="file" id="folder-input" webkitdirectory hidden>
 			</div>
-			<div class="hero-ctas web-only">
-				<button type="button" class="btn ghost" id="install-btn" hidden><span class="material-icon" aria-hidden="true">install_desktop</span>Install app</button>
-				<a class="btn ghost" href="https://github.com/AbdulDevHub/Local-Video-Player#install-the-chrome-extension" rel="noopener" target="_blank"><span class="material-icon" aria-hidden="true">extension</span>Get the Chrome extension</a>
-			</div>
 		</section>
 
 		<section class="shelf" id="continue-watching" aria-labelledby="cw-title" hidden>
@@ -149,7 +148,20 @@
 			</div>
 			<ul class="shelf-list" id="cw-list"></ul>
 		</section>
+	</main>
 
+	<footer class="site-footer">
+		<p>Free &amp; open source (MIT) · Made by <a href="https://github.com/AbdulDevHub" rel="noopener" target="_blank">Abdul Khan</a></p>
+	</footer>
+</div>
+
+<!-- About: features + FAQ. Kept in the page for search engines; opened from the header so the start screen never scrolls -->
+<dialog id="about-dialog" class="sheet" aria-labelledby="about-title">
+	<div class="dialog-head">
+		<h2 id="about-title">About Local Video Player</h2>
+		<button type="button" class="icon-btn material-icon" data-close-dialog aria-label="Close">close</button>
+	</div>
+	<div class="about-body">
 		<section class="features" id="features" aria-labelledby="features-title">
 			<h2 id="features-title">Everything a desktop player does, without installing one</h2>
 			<ul class="feature-grid">
@@ -164,22 +176,6 @@
 			</ul>
 		</section>
 
-		<section class="shortcuts-teaser" id="shortcuts" aria-labelledby="shortcuts-title">
-			<div>
-				<h2 id="shortcuts-title">Built for the keyboard</h2>
-				<p>More than 30 shortcuts. The essentials:</p>
-				<ul class="key-list">
-					<li><kbd>Space</kbd> Play / pause</li>
-					<li><kbd>←</kbd><kbd>→</kbd> Skip 10 seconds</li>
-					<li><kbd>S</kbd><kbd>D</kbd> Speed ± 0.1×</li>
-					<li><kbd>Q</kbd>–<kbd>T</kbd> 1.5× to 4× presets</li>
-					<li><kbd>F</kbd> Fullscreen</li>
-					<li><kbd>N</kbd><kbd>B</kbd> Next / previous</li>
-				</ul>
-			</div>
-			<button type="button" class="btn" data-open-shortcuts><span class="material-icon" aria-hidden="true">keyboard</span>See all shortcuts</button>
-		</section>
-
 		<section class="faq web-only" id="faq" aria-labelledby="faq-title">
 			<h2 id="faq-title">Questions</h2>
 			<details><summary>Are my videos uploaded anywhere?</summary><p>No. Files are played directly from your device by your browser. Nothing is uploaded, and there are no accounts, ads or tracking.</p></details>
@@ -188,12 +184,8 @@
 			<details><summary>Does it remember where I stopped?</summary><p>Yes. Your position and speed are saved in your browser, and partly watched videos appear in the Continue Watching shelf. In Chrome and Edge one click reopens the file; in other browsers you pick the file again and it resumes.</p></details>
 			<details><summary>Does it work offline?</summary><p>Yes. After your first visit the player works without an internet connection, and you can install it as an app. It is also available as a Chrome extension.</p></details>
 		</section>
-	</main>
-
-	<footer class="site-footer">
-		<p>Open source under the MIT License · Made by <a href="https://github.com/AbdulDevHub" rel="noopener" target="_blank">Abdul Khan</a> · <a href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank">Source on GitHub</a></p>
-	</footer>
-</div>
+	</div>
+</dialog>
 
 <!-- Full-window drop target, shown while files are dragged over the page -->
 <div id="drop-overlay" hidden>
@@ -243,6 +235,7 @@
 			<span id="file-name"></span>
 		</div>
 
+		<span class="ctl-spacer"></span>
 		<div class="speed-control-container">
 			<button type="button" class="speed-btn" id="decrease-speed-btn" aria-label="Decrease speed by 0.1">−</button>
 			<div class="speed-display" id="speed-display" role="button" tabindex="0" aria-label="Cycle through preset speeds">
@@ -264,6 +257,7 @@
 		</div>
 		<button type="button" aria-label="Playlist" title="Playlist (L)" class="material-icon playlist-btn">playlist_play</button>
 		<button type="button" aria-label="Keyboard shortcuts" title="Shortcuts (?)" class="material-icon help-btn" data-open-shortcuts>keyboard</button>
+		<button type="button" aria-label="Settings" title="Settings" class="material-icon settings-btn" data-open-settings>settings</button>
 		<button type="button" aria-label="Toggle fullscreen" class="material-icon fullscreen-btn">fullscreen</button>
 		<button type="button" aria-label="Toggle zoom" class="material-icon zoom-btn">zoom_out_map</button>
 	</div>
@@ -275,6 +269,56 @@
 		<button type="button" class="icon-btn material-icon" id="shortcuts-close" aria-label="Close" autofocus>close</button>
 	</div>
 	<div class="shortcut-groups" id="shortcut-groups"></div>
+</dialog>
+
+<dialog id="settings-dialog" class="sheet" aria-labelledby="settings-title">
+	<div class="dialog-head">
+		<h2 id="settings-title">Settings</h2>
+		<button type="button" class="icon-btn material-icon" data-close-dialog aria-label="Close">close</button>
+	</div>
+	<form class="settings-body" id="settings-form">
+		<fieldset>
+			<legend>Player buttons</legend>
+			<p class="hint">Choose what shows on the control bar. Keyboard shortcuts keep working either way.</p>
+			<div class="check-grid">
+				<label><input type="checkbox" name="controls.home"> <span class="material-icon" aria-hidden="true">home</span>Home</label>
+				<label><input type="checkbox" name="controls.skip"> <span class="material-icon" aria-hidden="true">replay_10</span>Skip back / forward</label>
+				<label><input type="checkbox" name="controls.next"> <span class="material-icon" aria-hidden="true">skip_next</span>Next in playlist</label>
+				<label><input type="checkbox" name="controls.volume"> <span class="material-icon" aria-hidden="true">volume_up</span>Volume</label>
+				<label><input type="checkbox" name="controls.time"> <span class="material-icon" aria-hidden="true">schedule</span>Time</label>
+				<label><input type="checkbox" name="controls.name"> <span class="material-icon" aria-hidden="true">title</span>File name</label>
+				<label><input type="checkbox" name="controls.speed"> <span class="material-icon" aria-hidden="true">speed</span>Speed</label>
+				<label><input type="checkbox" name="controls.subtitles"> <span class="material-icon" aria-hidden="true">subtitles</span>Subtitles</label>
+				<label><input type="checkbox" name="controls.playlist"> <span class="material-icon" aria-hidden="true">playlist_play</span>Playlist</label>
+				<label><input type="checkbox" name="controls.shortcuts"> <span class="material-icon" aria-hidden="true">keyboard</span>Shortcuts</label>
+				<label><input type="checkbox" name="controls.fullscreen"> <span class="material-icon" aria-hidden="true">fullscreen</span>Fullscreen</label>
+				<label><input type="checkbox" name="controls.zoom"> <span class="material-icon" aria-hidden="true">zoom_out_map</span>Zoom</label>
+			</div>
+		</fieldset>
+		<fieldset>
+			<legend>Playback</legend>
+			<label class="switch"><input type="checkbox" name="autoplay"><span>Start playing when I open a file<small>Videos from Continue watching always open paused.</small></span></label>
+			<label class="switch"><input type="checkbox" name="resume"><span>Resume where I left off<small>Remembers position and speed for each file.</small></span></label>
+			<label class="row">Skip amount
+				<select name="skip"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="30">30 seconds</option></select>
+			</label>
+		</fieldset>
+		<fieldset>
+			<legend>Stretch to fill</legend>
+			<label class="switch"><input type="checkbox" name="stretchVertical"><span>Stretch vertical videos too<small>Off: portrait videos keep their shape when you press F or U.</small></span></label>
+			<label class="row">Maximum stretch
+				<select name="maxStretch"><option value="1.15">Subtle (up to 15%)</option><option value="1.35">Normal (up to 35%)</option><option value="99">Always fill the screen</option></select>
+			</label>
+			<p class="hint">The stretch adapts to your screen and window size. If filling would distort a video more than this, it is left as is.</p>
+		</fieldset>
+		<fieldset>
+			<legend>Appearance</legend>
+			<label class="row">Theme
+				<select name="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">Match system</option></select>
+			</label>
+		</fieldset>
+		<div class="settings-actions"><button type="button" class="btn" id="settings-reset">Reset to defaults</button></div>
+	</form>
 </dialog>
 
 <div id="toasts" aria-live="polite"></div>

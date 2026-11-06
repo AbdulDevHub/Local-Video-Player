@@ -1,5 +1,5 @@
 // Offline support for the website: serve the app shell from cache, refresh it in the background.
-const CACHE = "lvp-v3.0.0"
+const CACHE = "lvp-v3.1.0"
 const SHELL = [
   "./",
   "index.html",
@@ -25,6 +25,7 @@ const SHELL = [
   "scripts/playlist.js",
   "scripts/pwa.js",
   "scripts/shortcuts.js",
+  "scripts/settings.js",
   "scripts/subtitles.js",
   "scripts/tools.js",
 ]

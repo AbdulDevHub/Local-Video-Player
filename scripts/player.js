@@ -1,13 +1,18 @@
 // Core player: playback, speed, volume, fullscreen/stretch, seeking and saved progress.
 // Feature modules (library, playlist, subtitles, tools…) hook in through `bus` and the exports.
 import { extractCoverImage } from "./cover.js"
+import { settings } from "./settings.js"
 
 // Fires "media:loaded" ({ file, handle, key, coverBlob }) whenever a new file starts loading
 export const bus = new EventTarget()
 export const STORAGE_PREFIX = "lvp:"
 
 // ----------------------------- GLOBAL VARIABLES -----------------------------
-export const preferences = { timeSkip: 10 }
+export const preferences = {
+  get timeSkip() {
+    return settings.skip
+  },
+}
 export const state = {
   localStorageKey: null,
   stretchedFullscreenActive: false,
@@ -271,8 +276,11 @@ export const videoControls = {
   },
 
   cyclePresetSpeed() {
-    state.currentPresetIndex = (state.currentPresetIndex + 1) % PRESET_SPEEDS.length
-    state.currentSpeed = PRESET_SPEEDS[state.currentPresetIndex]
+    // Pick the next preset above the *actual* speed, so restored or manually adjusted speeds
+    // can never leave a stale index behind (which used to repeat a preset)
+    const next = PRESET_SPEEDS.find((preset) => preset > elements.video.playbackRate + 0.01)
+    state.currentSpeed = next ?? PRESET_SPEEDS[0]
+    state.currentPresetIndex = PRESET_SPEEDS.indexOf(state.currentSpeed)
     state.isOnPreset = true
     videoControls.updatePlaybackRate()
   },
@@ -373,25 +381,12 @@ export const fullscreenHandler = {
 
 // ----------------------------- VIDEO STRETCHING -----------------------------
 export const videoStretching = {
-  getStretchMode() {
-    const aspect = elements.video.videoWidth / elements.video.videoHeight
-    const hasHiddenControls = elements.controls.classList.contains("hidden")
-    return aspect >= 1.77
-      ? hasHiddenControls
-        ? "mode-1"
-        : "fullscreen-mode-1"
-      : hasHiddenControls
-      ? "mode-2"
-      : "fullscreen-mode-2"
-  },
-
   toggle() {
     if (!state.isVideoReady) return
 
-    const mode = videoStretching.getStretchMode()
     if (!state.stretchingModeActive) {
       state.stretchingModeActive = true
-      elements.video.classList.add("stretchClass", mode)
+      videoStretching.apply()
     } else {
       state.stretchingModeActive = false
       elements.video.classList.remove(
@@ -402,6 +397,26 @@ export const videoStretching = {
         "fullscreen-mode-2"
       )
     }
+  },
+
+  // How much filling the player would distort the video (1 = no distortion)
+  stretchFactor() {
+    const { videoWidth, videoHeight, clientWidth, clientHeight } = elements.video
+    if (!videoWidth || !clientWidth || !clientHeight) return 1
+    const ratio = videoWidth / videoHeight / (clientWidth / clientHeight)
+    return Math.max(ratio, 1 / ratio)
+  },
+
+  canStretch() {
+    const { videoWidth, videoHeight } = elements.video
+    if (videoHeight > videoWidth && !settings.stretchVertical) return false
+    return videoStretching.stretchFactor() <= settings.maxStretch
+  },
+
+  // Stretching uses object-fit: fill, so it follows the window/screen size automatically.
+  // Re-run on resize: e.g. entering fullscreen changes the shape of the player.
+  apply() {
+    elements.video.classList.toggle("stretchClass", state.stretchingModeActive && videoStretching.canStretch())
   },
 
   async toggleStretchedFullscreen() {
@@ -604,6 +619,7 @@ export const fileManagement = {
     }
 
     state.localStorageKey = STORAGE_PREFIX + hash
+    state.forceResume = Boolean(source.forceResume)
     elements.video.src = URL.createObjectURL(file)
     elements.fileName.textContent = file.name.replace(/\.[^.]+$/, "")
     document.title = `${elements.fileName.textContent} · Local Video Player`
@@ -691,7 +707,7 @@ export const zoomControls = {
 
   toggleCrop() {
     const isZoomedIn = elements.zoomBtn.textContent === "zoom_out_map"
-    elements.video.style.objectFit = isZoomedIn ? "cover" : "contain"
+    elements.video.style.objectFit = isZoomedIn ? "cover" : "" // empty: back to fit, or to stretch if active
     elements.zoomBtn.textContent = isZoomedIn ? "crop_free" : "zoom_out_map"
   },
 }
@@ -990,7 +1006,7 @@ export const seekerControls = {
 // ----------------------------- INITIALIZATION -----------------------------
 function initializeVideo() {
   const saved = storage.read(state.localStorageKey)
-  if (saved) {
+  if (saved && (settings.resume || state.forceResume)) {
     storage.restore()
     if (saved.timer > 5) {
       bus.dispatchEvent(new CustomEvent("media:resumed", { detail: { time: saved.timer } }))

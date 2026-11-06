@@ -1,5 +1,6 @@
 // Play queue: built from several files or a folder, auto-advances when a video ends
 import { elements, fileManagement } from "./player.js"
+import { settings } from "./settings.js"
 import { subtitles } from "./subtitles.js"
 import { toast } from "./hud.js"
 
@@ -14,7 +15,8 @@ export const playlist = {
   items: [],
   index: -1,
 
-  async open(items, { append = false } = {}) {
+  // autoplay: undefined = follow Settings; Continue watching passes false
+  async open(items, { append = false, autoplay } = {}) {
     if (!items.length) return
     if (append && playlist.items.length) {
       playlist.items.push(...items)
@@ -23,11 +25,11 @@ export const playlist = {
       return
     }
     playlist.items = items
-    await playlist.play(0)
+    await playlist.play(0, { autoplay })
     if (items.length > 1) toast(`Playlist: ${items.length} files`)
   },
 
-  async play(index) {
+  async play(index, { autoplay = settings.autoplay } = {}) {
     const item = playlist.items[index]
     if (!item) return
     try {
@@ -39,7 +41,7 @@ export const playlist = {
     }
     playlist.index = index
     if (item.subtitle) await subtitles.load(item.subtitle)
-    elements.video.play().catch(() => {}) // autoplay may be blocked until the user interacts
+    if (autoplay) elements.video.play().catch(() => {}) // may be blocked until the user interacts
     playlist.render()
   },
 
@@ -116,7 +118,7 @@ export function initPlaylist() {
     if (playlist.index < playlist.items.length - 1) {
       const next = playlist.items[playlist.index + 1]
       toast(`Up next: ${next.name.replace(/\.[^.]+$/, "")}`)
-      playlist.play(playlist.index + 1)
+      playlist.play(playlist.index + 1, { autoplay: true })
     }
   })
 }

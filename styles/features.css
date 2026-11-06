@@ -341,7 +341,8 @@
 }
 
 /* -------- Shortcuts dialog -------- */
-#shortcuts-dialog {
+#shortcuts-dialog,
+.sheet {
   margin: auto;
   width: min(100% - 2rem, 60rem);
   max-height: min(100% - 2rem, 46rem);
@@ -383,7 +384,7 @@
     padding: 1.5rem;
   }
 
-  & h3 {
+  & .shortcut-groups h3 {
     margin-bottom: 0.6rem;
     font-size: 0.75rem;
     letter-spacing: 0.08em;
@@ -391,7 +392,7 @@
     color: var(--gold-text);
   }
 
-  & dl {
+  & .shortcut-groups dl {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.45rem 1rem;
@@ -399,12 +400,12 @@
     font-size: 0.85rem;
   }
 
-  & dt {
+  & .shortcut-groups dt {
     white-space: nowrap;
     color: var(--text2);
   }
 
-  & dd {
+  & .shortcut-groups dd {
     color: var(--text2);
   }
 }
@@ -481,4 +482,18 @@
       display: none;
     }
   }
+}
+
+/* -------- Control bar visibility (Settings → Player buttons) -------- */
+.player .controls .ctl-spacer {
+  flex: 1;
+  height: auto;
+}
+
+.player .controls .ctl-off {
+  display: none !important;
+}
+
+.player .controls .speed-control-container .speed-btn:is(:hover, :focus-visible) {
+  box-shadow: none;
 }

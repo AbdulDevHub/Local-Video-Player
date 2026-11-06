@@ -4,8 +4,8 @@ export const SHORTCUTS = [
     title: "Playback",
     keys: [
       [["Space", "K"], "Play / pause"],
-      [["←"], "Back 10 seconds"],
-      [["→"], "Forward 10 seconds"],
+      [["←"], "Skip back (5/10/30s in Settings)"],
+      [["→"], "Skip forward"],
       [["0", "–", "9"], "Jump to 0% – 90%"],
       [[",", "."], "Previous / next frame (paused)"],
       [["N"], "Next in playlist"],

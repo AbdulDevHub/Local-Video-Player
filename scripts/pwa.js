@@ -3,22 +3,24 @@ const THEMES = ["dark", "light", "system"]
 const THEME_ICONS = { dark: "dark_mode", light: "light_mode", system: "brightness_auto" }
 const root = document.documentElement
 
-export function initTheme() {
+export const getTheme = () => root.dataset.theme || "dark"
+
+export function setTheme(theme) {
   const button = document.querySelector("#theme-btn")
-  const apply = (theme) => {
-    root.dataset.theme = theme
-    button.textContent = THEME_ICONS[theme]
-    button.title = `Theme: ${theme}`
-    const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
-    document.querySelector('meta[name="theme-color"]').content = dark ? "#16171b" : "#f4f5f7"
-  }
-  apply(root.dataset.theme || "dark")
-  button.addEventListener("click", () => {
-    const next = THEMES[(THEMES.indexOf(root.dataset.theme) + 1) % THEMES.length]
-    try {
-      localStorage.setItem("lvp:theme", next)
-    } catch {}
-    apply(next)
+  root.dataset.theme = theme
+  button.textContent = THEME_ICONS[theme]
+  button.title = `Theme: ${theme}`
+  const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#16171b" : "#f4f5f7"
+  try {
+    localStorage.setItem("lvp:theme", theme)
+  } catch {}
+}
+
+export function initTheme() {
+  setTheme(getTheme())
+  document.querySelector("#theme-btn").addEventListener("click", () => {
+    setTheme(THEMES[(THEMES.indexOf(getTheme()) + 1) % THEMES.length])
   })
 }
 

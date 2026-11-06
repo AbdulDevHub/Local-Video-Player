@@ -4,7 +4,7 @@
    "short_name": "Video Player",
    "description": "Private player for local videos and music: resume, playlists, subtitles, 16x speed, 500% volume and 30+ keyboard shortcuts.",
    "author": "Abdul Khan",
-   "version": "3.0.0",
+   "version": "3.1.0",
    "background": {
       "service_worker": "scripts/background.js"
    },

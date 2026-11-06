@@ -1,6 +1,7 @@
 // New shortcuts and power tools (A-B loop, frame stepping, screenshots, % jumps) plus on-screen
 // feedback for the original shortcuts. The original key handler in player.js runs first.
-import { bus, elements, utils, fileManagement, state as playerState } from "./player.js"
+import { bus, elements, utils, fileManagement, videoStretching, preferences, state as playerState } from "./player.js"
+import { settings, onSettingsChange } from "./settings.js"
 import { hud, toast } from "./hud.js"
 import { playlist } from "./playlist.js"
 import { subtitles } from "./subtitles.js"
@@ -106,13 +107,13 @@ function onKeyDown(e) {
     ",": () => stepFrame(-1),
     ".": () => stepFrame(1),
     // Feedback for the original shortcuts (their actions already ran)
-    ArrowLeft: () => hud.show("replay_10", `−10s · ${fmt(video.currentTime)}`),
-    ArrowRight: () => hud.show("forward_10", `+10s · ${fmt(video.currentTime)}`),
+    ArrowLeft: () => hud.show(`replay_${preferences.timeSkip}`, `−${preferences.timeSkip}s · ${fmt(video.currentTime)}`),
+    ArrowRight: () => hud.show(`forward_${preferences.timeSkip}`, `+${preferences.timeSkip}s · ${fmt(video.currentTime)}`),
     ArrowUp: showVolume,
     ArrowDown: showVolume,
     m: showVolume,
     c: () => hud.show("crop", video.style.objectFit === "cover" ? "Crop to fill" : "Fit to screen"),
-    u: () => hud.show("aspect_ratio", playerState.stretchingModeActive ? "Stretch to fill" : "Original aspect"),
+    u: showStretch,
   }
   if (/^[0-9]$/.test(key) && Number.isFinite(video.duration)) {
     video.currentTime = (video.duration * Number(key)) / 10
@@ -124,6 +125,24 @@ function onKeyDown(e) {
   }
 }
 
+function showStretch() {
+  if (!playerState.stretchingModeActive) return hud.show("aspect_ratio", "Original aspect")
+  if (video.classList.contains("stretchClass")) return hud.show("aspect_ratio", "Stretch to fill")
+  const vertical = video.videoHeight > video.videoWidth && !settings.stretchVertical
+  hud.show("aspect_ratio", vertical ? "Vertical video: kept its shape" : "Would distort too much: kept its shape")
+}
+
+// Skip buttons follow the skip amount from Settings (Material icons exist for 5, 10 and 30)
+function applySkipButtons() {
+  const n = preferences.timeSkip
+  const rewind = document.querySelector(".rewind-btn")
+  const forward = document.querySelector(".forward-btn")
+  rewind.textContent = `replay_${n}`
+  forward.textContent = `forward_${n}`
+  rewind.setAttribute("aria-label", `Rewind ${n} seconds`)
+  forward.setAttribute("aria-label", `Forward ${n} seconds`)
+}
+
 function showVolume() {
   const value = elements.volumeControls.valueAsNumber
   hud.show(value === 0 ? "volume_off" : value > 100 ? "campaign" : "volume_up", value === 0 ? "Muted" : `Volume ${value}%`)
@@ -131,6 +150,13 @@ function showVolume() {
 
 export function initTools() {
   document.addEventListener("keydown", onKeyDown)
+  applySkipButtons()
+  new ResizeObserver(videoStretching.apply).observe(video)
+  video.addEventListener("loadedmetadata", videoStretching.apply)
+  onSettingsChange(() => {
+    applySkipButtons()
+    videoStretching.apply()
+  })
   trackFrameRate()
 
   video.addEventListener("timeupdate", () => {

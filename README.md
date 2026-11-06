@@ -15,13 +15,14 @@ Use it as a **website** (installable, works offline) or as a **Chrome extension*
 
 ## Features
 
-- **Continue watching:** your position and speed are saved for every file. The start screen shows partly watched videos with thumbnails, and in Chrome and Edge one click reopens the file.
+- **Continue watching:** your position and speed are saved for every file. The start screen shows partly watched videos with thumbnails, and in Chrome and Edge one click reopens the file, paused at the spot where you stopped.
 - **Playlists and folders:** drop several files or a whole folder. Files play in natural order (episode 2 before episode 10) and the next one starts automatically.
 - **Subtitles:** SRT and VTT, matched to the video by file name. You can shift the timing in 0.1 s steps and resize the text.
 - **Speed control:** 0.1× to 16× in 0.1× steps, plus one-key presets for 1.5×, 2×, 2.5×, 3× and 4×.
 - **500% volume boost** for quiet recordings.
 - **Power tools:** A-B loop, frame-by-frame stepping, full-resolution screenshots and jumping to 0–90% with the number keys.
-- **Zoom and stretch** to fill the screen, with arrow-key fine-tuning.
+- **Smart stretch to fill:** the stretch adapts to your screen and window size, leaves vertical videos alone and skips videos that would be distorted too much. Crop-to-fill and arrow-key fine-tuning are there too.
+- **Settings:** choose which buttons appear on the player (hide subtitles, playlist, zoom and more), plus autoplay, resume, skip amount (5/10/30 s), stretch limits and theme.
 - **On-screen feedback** for every shortcut, and a cheat sheet that opens with <kbd>?</kbd>.
 - **Light, dark or system theme.**
 - **Works offline and installs as an app.** Once installed, it shows up under *Open with* for video files on your computer.
@@ -50,7 +51,7 @@ Press <kbd>?</kbd> in the player to see this list.
 | Key | Action |
 | :-: | --- |
 | <kbd>Space</kbd> / <kbd>K</kbd> | Play / pause |
-| <kbd>←</kbd> / <kbd>→</kbd> | Back / forward 10 seconds |
+| <kbd>←</kbd> / <kbd>→</kbd> | Skip back / forward (10 s by default, change it in Settings) |
 | <kbd>0</kbd> – <kbd>9</kbd> | Jump to 0% – 90% |
 | <kbd>,</kbd> / <kbd>.</kbd> | Previous / next frame |
 | <kbd>N</kbd> / <kbd>B</kbd> | Next / previous in playlist |
@@ -101,6 +102,7 @@ To work on the extension, load the folder with **Load unpacked** (see above) and
 | `scripts/playlist.js` | Play queue and auto-advance |
 | `scripts/library.js` | Continue Watching shelf (IndexedDB) |
 | `scripts/subtitles.js` | SRT/VTT parsing and rendering |
+| `scripts/settings.js` | Settings panel: visible buttons, autoplay, resume, skip amount, stretch limits |
 | `scripts/tools.js` | New shortcuts, A-B loop, frame steps, screenshots, on-screen feedback |
 | `scripts/pwa.js`, `sw.js`, `app.webmanifest` | Theme switching, offline support, install |
 | `manifest.json`, `scripts/background.js` | Chrome extension |

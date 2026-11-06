@@ -70,7 +70,8 @@ async function resume(entry) {
       if (permission !== "granted") permission = await entry.handle.requestPermission({ mode: "read" })
       if (permission === "granted") {
         await entry.handle.getFile() // throws if the file was moved or deleted
-        return playlist.open([{ name: entry.name, handle: entry.handle }])
+        // Open paused at the saved spot, even if "Resume" is off in Settings
+        return playlist.open([{ name: entry.name, handle: entry.handle, forceResume: true }], { autoplay: false })
       }
     } catch (error) {
       console.info("Stored file handle is no longer usable:", error)

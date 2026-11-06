@@ -22,12 +22,6 @@ body,
   height: 100%;
 }
 
-html[data-view="home"],
-html[data-view="home"] body {
-  height: auto;
-  min-height: 100%;
-}
-
 .player.hide-cursor {
   cursor: none;
 }
@@ -302,7 +296,6 @@ input[type="range"] {
 
 /* Speed Control Container */
 .speed-control-container {
-  margin-inline-start: auto;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -361,38 +354,19 @@ input[type="range"] {
     &:hover {
       background: var(--surface4);
       color: var(--text1);
-      transform: scale(1.1);
+      box-shadow: none;
     }
 
     &:active {
-      transform: scale(0.95);
+      transform: scale(0.94);
     }
   }
 }
 
-.stretchClass {
-  transform-origin: top left;
-  transform: scaleX(1) scaleY(1) !important;
-
-  &.mode-2 {
-    transform-origin: top center;
-    transform: scaleX(1.2) scaleY(1) !important;
-  }
-
-  &.mode-1 {
-    transform-origin: center left;
-    transform: scaleX(1) scaleY(1.11) !important;
-  }
-
-  &.fullscreen-mode-2 {
-    transform-origin: top center;
-    transform: scaleX(1.291) scaleY(1) !important;
-  }
-
-  &.fullscreen-mode-1 {
-    transform-origin: center left;
-    transform: scaleX(1) scaleY(1.027) !important;
-  }
+/* Stretch to fill: the browser scales the frame to the player box, so it adapts to any
+   screen or window size. scripts/player.js decides when stretching is allowed. */
+.player video.stretchClass {
+  object-fit: fill; /* crop (C) sets an inline object-fit that still wins */
 }
 
 #seeker-preview {
