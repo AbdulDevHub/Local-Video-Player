@@ -1,89 +1,116 @@
-# Player for local videos
+# Local Video Player: A Free, Private Video Player for Your Browser
 
-<img height="400" alt="Extension Screenshot" src="Screenshot.png">
+[![Try it online](https://img.shields.io/badge/Try%20it-online-f3c669?style=for-the-badge)](https://abduldevhub.github.io/Local-Video-Player/)
+[![Chrome extension](https://img.shields.io/badge/Chrome-extension-5b8cff?style=for-the-badge&logo=googlechrome&logoColor=white)](#install-the-chrome-extension)
+[![Latest release](https://img.shields.io/github/v/release/AbdulDevHub/Local-Video-Player?style=for-the-badge)](https://github.com/AbdulDevHub/Local-Video-Player/releases/latest)
+[![MIT License](https://img.shields.io/badge/license-MIT-lightgrey?style=for-the-badge)](LICENSE)
 
-## Overview
+Play MP4, MKV, WebM, MP3 and other files from your computer, straight in the browser. Nothing is uploaded. It remembers where you stopped, plays whole folders as a playlist, shows SRT/VTT subtitles, goes up to 16× speed and boosts quiet audio to 500%.
 
-This a video player for local videos whose main features are:
+Use it as a **website** (installable, works offline) or as a **Chrome extension**. Both run the same code.
 
-* Light/dark theme (following system preferences)
-* Continue watching from where you left off[^1]
-* Volume amplification up to 500% for quiet videos
-* Improved speed controls with preset cycling and fine adjustments
-* [Keyboard shortcuts](#keyboard-shortcuts)
-* Global Media Controls integration
-* Works offline
+**[▶ Open Local Video Player](https://abduldevhub.github.io/Local-Video-Player/)**
 
-[^1]: The video state is saved in the browser's local storage. If you clear your browser's data, the state will be lost. Saved state will be deleted upon video completion or for videos last played more than 30 days ago.
+![Local Video Player playing a video with subtitles and the playlist open](images/screenshot-player.png)
 
-## Setup
+## Features
 
-To install and use this extension locally, follow these steps:
+- **Continue watching:** your position and speed are saved for every file. The start screen shows partly watched videos with thumbnails, and in Chrome and Edge one click reopens the file.
+- **Playlists and folders:** drop several files or a whole folder. Files play in natural order (episode 2 before episode 10) and the next one starts automatically.
+- **Subtitles:** SRT and VTT, matched to the video by file name. You can shift the timing in 0.1 s steps and resize the text.
+- **Speed control:** 0.1× to 16× in 0.1× steps, plus one-key presets for 1.5×, 2×, 2.5×, 3× and 4×.
+- **500% volume boost** for quiet recordings.
+- **Power tools:** A-B loop, frame-by-frame stepping, full-resolution screenshots and jumping to 0–90% with the number keys.
+- **Zoom and stretch** to fill the screen, with arrow-key fine-tuning.
+- **On-screen feedback** for every shortcut, and a cheat sheet that opens with <kbd>?</kbd>.
+- **Light, dark or system theme.**
+- **Works offline and installs as an app.** Once installed, it shows up under *Open with* for video files on your computer.
+- **Integrates with your system's media controls** (play/pause, skip, next/previous track).
+- **Album art** from MP3 files is shown while the audio plays.
 
-1. Clone the repository
-2. Navigate to the project directory
-3. Open the Chrome browser and go to `chrome://extensions/`
-4. Enable Developer mode by ticking the checkbox in the upper-right corner.
-5. Click on the "Load unpacked" button.
-6. Select the directory containing your unpacked extension.
+![Start screen with the Continue Watching shelf](images/screenshot-home.png)
 
-## Usage
+## Use It Online
 
-To use the extension, click on its tooltip icon or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>.
-This shortcut can be changed by visiting <chrome://extensions/shortcuts> (you may need to copy and paste this URL in the address bar).
+Open **<https://abduldevhub.github.io/Local-Video-Player/>**, then drop a video onto the page or click **Choose files**. To install it as an app, use **Install app** on the start screen (Chrome/Edge), or *Add to Dock* / *Add to Home Screen* in Safari.
 
-The page shown in the screenshots will open.
-To open a video, drag and drop it there or click on the button.
-If another video is opened, its state will be saved and the dragged video will be opened.
+It works in Chrome, Edge, Firefox and Safari. Chrome and Edge get the extras: one-click resume from Continue Watching, folder picking and *Open with* for the installed app.
 
-### Speed Controls
+## Install the Chrome Extension
 
-The player features an improved speed control interface with three buttons:
+1. Download `local-video-player-extension.zip` from the [latest release](https://github.com/AbdulDevHub/Local-Video-Player/releases/latest) and unzip it, or clone this repository.
+2. Go to `chrome://extensions/` and switch on **Developer mode** (top right).
+3. Click **Load unpacked** and select the unzipped folder.
+4. Click the extension's icon or press <kbd>Alt</kbd>+<kbd>V</kbd> to open the player. You can change the shortcut at `chrome://extensions/shortcuts`.
 
-* **Center display**: Click to cycle through preset speeds (1.0x → 1.5x → 2.0x → 2.5x → 3.0x → 4.0x → back to 1.0x). Shows a ★ indicator when on a preset speed.
-* **− button**: Decrease speed by 0.1x for fine-grained control
-* **+ button**: Increase speed by 0.1x for fine-grained control
+## Keyboard Shortcuts
 
-Speed range: 0.1x to 16.0x
+Press <kbd>?</kbd> in the player to see this list.
 
-### Keyboard shortcuts
+| Key | Action |
+| :-: | --- |
+| <kbd>Space</kbd> / <kbd>K</kbd> | Play / pause |
+| <kbd>←</kbd> / <kbd>→</kbd> | Back / forward 10 seconds |
+| <kbd>0</kbd> – <kbd>9</kbd> | Jump to 0% – 90% |
+| <kbd>,</kbd> / <kbd>.</kbd> | Previous / next frame |
+| <kbd>N</kbd> / <kbd>B</kbd> | Next / previous in playlist |
+| <kbd>L</kbd> | Show the playlist |
+| <kbd>S</kbd> / <kbd>D</kbd> | Speed up / slow down by 0.1× |
+| <kbd>A</kbd> | Reset speed to 1× |
+| <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> | 1.5× / 2× / 2.5× / 3× / 4× (press again for 1×) |
+| Click the speed | Cycle through the presets |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Volume up (to 500%) / down |
+| <kbd>M</kbd> | Mute |
+| <kbd>Y</kbd> | Subtitles on / off |
+| <kbd>F</kbd> | Fullscreen |
+| <kbd>G</kbd> | Fullscreen or zoom |
+| <kbd>C</kbd> | Crop to fill |
+| <kbd>U</kbd> | Stretch to fill |
+| <kbd>Ctrl</kbd> + <kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd><kbd>←</kbd> | Fine-tune the stretch |
+| <kbd>P</kbd> | Picture-in-picture |
+| <kbd>H</kbd> | Hide the controls |
+| <kbd>V</kbd> | Thin progress bar while the controls are hidden |
+| <kbd>[</kbd> / <kbd>]</kbd> / <kbd>\\</kbd> | Set loop start / set loop end / clear the loop |
+| <kbd>I</kbd> | Save a screenshot |
+| <kbd>Shift</kbd> + <kbd>Z</kbd> | Giant seeker (move the mouse to scrub) |
+| <kbd>Z</kbd> | Thumbnail preview on the progress bar |
+| <kbd>O</kbd> | Open files |
+| Click the time | Switch between elapsed and remaining time |
 
-The following keyboard shortcuts are supported:
+## Privacy
 
-|                          Key                           | Action                             |
-| :----------------------------------------------------: | ---------------------------------- |
-|            <kbd>Space</kbd><br><kbd>K</kbd>            | Toggle play/pause                  |
-|                      <kbd>D</kbd>                      | Slow down by 0.1x                  |
-|                      <kbd>S</kbd>                      | Speed up by 0.1x                   |
-|                   <kbd>&larr;</kbd>                    | Rewind 10 seconds                  |
-|                   <kbd>&rarr;</kbd>                    | Forward 10 seconds                 |
-|                   <kbd>&uarr;</kbd>                    | Increase volume                    |
-|                   <kbd>&darr;</kbd>                    | Decrease volume                    |
-|                      <kbd>A</kbd>                      | Reset to default speed (1x)        |
-|                   <kbd>Click Speed</kbd>               | Toggle time elapsed/remaining      |
-|                      <kbd>M</kbd>                      | Toggle mute                        |
-|                      <kbd>C</kbd>                      | Toggle video zoom                  |
-|                      <kbd>P</kbd>                      | Toggle PiP                         |
-|            <kbd>F</kbd><br><kbd>Enter</kbd>            | Toggle fullscreen                  |
-|                      <kbd>G</kbd>                      | Toggle fullscreen or zoom          |
-|                      <kbd>Q</kbd>                      | Set speed to 1.5x or reset to 1x   |
-|                      <kbd>W</kbd>                      | Set speed to 2x or reset to 1x     |
-|                      <kbd>E</kbd>                      | Set speed to 2.5x or reset to 1x   |
-|                      <kbd>R</kbd>                      | Set speed to 3x or reset to 1x     |
-|                      <kbd>T</kbd>                      | Set speed to 4x or reset to 1x     |
-|                      <kbd>H</kbd>                      | Hide playbar/controls              |
-|                      <kbd>U</kbd>                      | Toggle video stretching            |
-|                <kbd>CTRL + ↑→↓← </kbd>                 | Stretch video ↑→↓← slightly        |
-|                      <kbd>Z</kbd>                      | Toggle giant video seeker mode     |
-|                      <kbd>z</kbd>                      | Toggle small video seeker mode     |
-|                      <kbd>V</kbd>                      | Toggle preview bar                 |
+Everything happens on your device. Files are read by your browser and never uploaded. Saved positions, speeds and thumbnails stay in your browser's storage and are forgotten after 30 days without use, or when you clear your browsing data. There are no accounts, analytics or ads.
+
+## Development
+
+There is no build step: it's plain HTML, CSS and JavaScript modules.
+
+```sh
+git clone https://github.com/AbdulDevHub/Local-Video-Player.git
+cd Local-Video-Player
+npx serve .            # or any static file server, then open the printed URL
+```
+
+To work on the extension, load the folder with **Load unpacked** (see above) and reload it after changes.
+
+| Path | What it does |
+| --- | --- |
+| `index.html` | The start screen and player markup, with SEO metadata |
+| `scripts/player.js` | Core player: playback, speed, volume, fullscreen, stretching, seeking, saved progress |
+| `scripts/files.js` | Drag and drop, file and folder pickers, *Open with* for the installed app |
+| `scripts/playlist.js` | Play queue and auto-advance |
+| `scripts/library.js` | Continue Watching shelf (IndexedDB) |
+| `scripts/subtitles.js` | SRT/VTT parsing and rendering |
+| `scripts/tools.js` | New shortcuts, A-B loop, frame steps, screenshots, on-screen feedback |
+| `scripts/pwa.js`, `sw.js`, `app.webmanifest` | Theme switching, offline support, install |
+| `manifest.json`, `scripts/background.js` | Chrome extension |
+
+Pushing to `main` deploys the website through GitHub Actions. Pushing a `v*` tag publishes a release with the extension zip.
 
 ## Contributing
 
-While this is a personal project, I'm open to collaboration. If you have suggestions for improvements, please open an issue.
+This is a personal project, but suggestions and pull requests are welcome. Please [open an issue](https://github.com/AbdulDevHub/Local-Video-Player/issues) first.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-<br>
+MIT. See [LICENSE](LICENSE).
