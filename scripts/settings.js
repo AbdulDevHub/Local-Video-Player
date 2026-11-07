@@ -19,6 +19,7 @@ export const DEFAULTS = {
   },
   autoplay: true,
   resume: true,
+  seekPreview: true,
   skip: 10,
   stretchVertical: false,
   maxStretch: 1.35,

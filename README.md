@@ -74,7 +74,7 @@ Press <kbd>?</kbd> in the player to see this list.
 | <kbd>[</kbd> / <kbd>]</kbd> / <kbd>\\</kbd> | Set loop start / set loop end / clear the loop |
 | <kbd>I</kbd> | Save a screenshot |
 | <kbd>Shift</kbd> + <kbd>Z</kbd> | Giant seeker (move the mouse to scrub) |
-| <kbd>Z</kbd> | Thumbnail preview on the progress bar |
+| <kbd>Z</kbd> | Turn thumbnail previews on the progress bar on or off (default is set in Settings) |
 | <kbd>O</kbd> | Open files |
 | Click the time | Switch between elapsed and remaining time |
 

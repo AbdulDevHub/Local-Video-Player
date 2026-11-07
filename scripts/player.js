@@ -1,7 +1,7 @@
 // Core player: playback, speed, volume, fullscreen/stretch, seeking and saved progress.
 // Feature modules (library, playlist, subtitles, tools…) hook in through `bus` and the exports.
 import { extractCoverImage } from "./cover.js"
-import { settings } from "./settings.js"
+import { settings, onSettingsChange } from "./settings.js"
 
 // Fires "media:loaded" ({ file, handle, key, coverBlob }) whenever a new file starts loading
 export const bus = new EventTarget()
@@ -24,7 +24,8 @@ export const state = {
   scaleY: 1,
   isVideoLoaded: false,
   isGiantSeekerActive: false,
-  isSmallSeekerActive: false,
+  isSmallSeekerActive: settings.seekPreview,
+  isHoveringBar: false,
   aspectRatio: null,
   seekerWidth: null,
   inactivityTimeout: null,
@@ -804,6 +805,8 @@ export const seekerControls = {
 
     // If no nearby frame found, generate one
     const frameData = await seekerControls.generatePreviewFrame(previewTime)
+    // The mouse may have left the bar (or the preview was switched off) while the frame was drawn
+    if (!state.isHoveringBar || !state.isSmallSeekerActive) return
     seekerControls.updateSeekerPreviewWithFrame(previewLeft, previewTime, frameData)
 
     // Start preloading the surrounding segment
@@ -1131,22 +1134,19 @@ function initializeEventListeners() {
     // seekerControls.initializePreprocessing()
   })
 
-  // Keyboard controls
+  // Z turns the preview on or off until the setting changes; the setting is the default
+  const hidePreview = () => (elements.seekerPreview.style.display = "none")
   document.addEventListener("keydown", (e) => {
-    state.isSmallSeekerActive =
-      e.key === "z" ? !state.isSmallSeekerActive : state.isSmallSeekerActive
-    if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
+    if (e.key !== "z" || e.ctrlKey || e.metaKey || e.altKey) return
+    if (e.target.closest?.("input:not([type=range]), textarea, select, [contenteditable]")) return
+    state.isSmallSeekerActive = !state.isSmallSeekerActive
+    if (!state.isSmallSeekerActive) hidePreview()
   })
-
-  // Reset states
-  elements.video.addEventListener("play", () => {
-    state.isSmallSeekerActive = false
-    if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
+  onSettingsChange(() => {
+    state.isSmallSeekerActive = settings.seekPreview
+    if (!state.isSmallSeekerActive) hidePreview()
   })
-  elements.progressBar.addEventListener("click", () => {
-    state.isSmallSeekerActive = false
-    if (!state.isSmallSeekerActive) elements.seekerPreview.style.display = "none"
-  })
+  elements.progressBar.addEventListener("click", hidePreview)
 
   // Preview handling
   elements.progressBar.addEventListener(
@@ -1157,8 +1157,10 @@ function initializeEventListeners() {
     }, 50)
   )
 
+  elements.progressBar.addEventListener("mouseenter", () => (state.isHoveringBar = true))
   elements.progressBar.addEventListener("mouseleave", () => {
-    elements.seekerPreview.style.display = "none"
+    state.isHoveringBar = false
+    hidePreview()
   })
 
   // Clean up on video source change

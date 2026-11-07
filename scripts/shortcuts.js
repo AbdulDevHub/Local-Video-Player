@@ -56,7 +56,7 @@ export const SHORTCUTS = [
       [["\\"], "Clear loop"],
       [["I"], "Save screenshot"],
       [["Shift", "+", "Z"], "Giant seeker (move mouse to scrub)"],
-      [["Z"], "Thumbnail preview on progress bar"],
+      [["Z"], "Turn progress bar thumbnails on/off"],
       [["O"], "Open files"],
       [["?"], "This list"],
     ],
