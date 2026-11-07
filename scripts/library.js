@@ -6,8 +6,9 @@ import { playlist } from "./playlist.js"
 import { files } from "./files.js"
 import { toast } from "./hud.js"
 
-const section = document.querySelector("#continue-watching")
 const list = document.querySelector("#cw-list")
+const clearButton = document.querySelector("#cw-clear")
+const emptyHint = document.querySelector("#cw-empty")
 const MAX_ENTRIES = 12
 const MAX_AGE = 30 * 24 * 60 * 60 * 1000
 let current = null // the library entry for the open file
@@ -100,7 +101,9 @@ export const library = {
     entries = entries.slice(0, MAX_ENTRIES)
 
     list.querySelectorAll("img").forEach((img) => URL.revokeObjectURL(img.src))
-    section.hidden = !entries.length
+    // The column stays put; an empty list shows a hint instead
+    clearButton.hidden = !entries.length
+    emptyHint.hidden = !!entries.length
     list.replaceChildren(...entries.map(card))
   },
 }
@@ -184,7 +187,7 @@ export function initLibrary() {
     if (document.visibilityState === "hidden") save()
   })
 
-  document.querySelector("#cw-clear").addEventListener("click", async () => {
+  clearButton.addEventListener("click", async () => {
     await db.clear()
     library.render()
   })

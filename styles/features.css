@@ -6,7 +6,8 @@
   inset: 0;
   z-index: 10;
   display: grid;
-  place-items: center;
+  /* The dashed frame hugs the window edges: the whole page is the drop target */
+  padding: clamp(0.75rem, 2vw, 1.5rem);
   background: color-mix(in srgb, var(--surface1) 55%, transparent);
   backdrop-filter: blur(6px);
   animation: fade-in 0.15s ease-out;
@@ -14,16 +15,16 @@
   & .drop-overlay-box {
     pointer-events: none; /* keep dragleave firing only when leaving the window */
     display: grid;
-    place-items: center;
+    place-content: center;
+    justify-items: center;
     gap: 0.5rem;
-    width: min(100% - 4rem, 36rem);
-    padding: 3.5rem 1rem;
+    padding: 1rem;
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text1);
     border: 3px dashed var(--video-bar);
     border-radius: 1.5rem;
-    background: color-mix(in srgb, var(--surface2) 85%, transparent);
+    background: color-mix(in srgb, var(--video-bar) 6%, transparent);
 
     & .material-icon {
       font-size: 3.5rem;

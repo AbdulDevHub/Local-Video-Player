@@ -106,17 +106,13 @@
 <!-- ============================== START SCREEN ============================== -->
 <div class="landing droppable" id="drag-panel">
 	<header class="site-header">
-		<a class="brand" href="./" aria-label="Local Video Player home">
-			<img src="icons/icon.svg" alt="" width="32" height="32">
-			<span>Local Video Player</span>
-		</a>
 		<nav aria-label="Main">
-			<button type="button" class="nav-link" data-open-about="features">Features</button>
-			<button type="button" class="nav-link" data-open-shortcuts>Shortcuts</button>
 			<button type="button" class="nav-link web-only" data-open-about="faq">FAQ</button>
 			<a class="nav-link web-only" href="https://github.com/AbdulDevHub/Local-Video-Player#install-the-chrome-extension" rel="noopener" target="_blank">Extension</a>
-			<a class="nav-link" href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank">GitHub</a>
 			<button type="button" class="btn small web-only" id="install-btn" hidden><span class="material-icon" aria-hidden="true">install_desktop</span>Install</button>
+			<button type="button" class="icon-btn material-icon" data-open-about="features" aria-label="Features" title="Features">auto_awesome</button>
+			<button type="button" class="icon-btn material-icon" data-open-shortcuts aria-label="Keyboard shortcuts" title="Shortcuts (?)">keyboard</button>
+			<a class="icon-btn" href="https://github.com/AbdulDevHub/Local-Video-Player" rel="noopener" target="_blank" aria-label="GitHub" title="GitHub"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
 			<button type="button" class="icon-btn material-icon" data-open-settings aria-label="Settings" title="Settings">settings</button>
 			<button type="button" class="icon-btn material-icon" id="theme-btn" aria-label="Change theme" title="Theme">dark_mode</button>
 		</nav>
@@ -126,11 +122,9 @@
 		<section class="hero" aria-labelledby="hero-title">
 			<p class="eyebrow"><span class="material-icon" aria-hidden="true">lock</span> 100% private · works offline · no uploads</p>
 			<h1 id="hero-title">Play any video on your computer, <em>right in your browser</em>.</h1>
-			<p class="lede">MP4, MKV, WebM, MP3 and more. Pick up where you left off, build playlists, add subtitles and play at up to 16× speed. Your files never leave your device.</p>
-
 			<div class="drop-zone" id="drop-zone">
 				<span class="material-icon drop-icon" aria-hidden="true">movie</span>
-				<p class="drop-title" id="drag-panel-text">Drop videos, a folder or subtitles here</p>
+				<p class="drop-title" id="drag-panel-text">Drop videos, a folder or subtitles anywhere</p>
 				<div class="drop-actions">
 					<button type="button" class="btn primary" id="file-picker"><span class="material-icon" aria-hidden="true">file_open</span>Choose files</button>
 					<button type="button" class="btn" id="folder-picker"><span class="material-icon" aria-hidden="true">folder_open</span>Open folder</button>
@@ -140,19 +134,17 @@
 				<input type="file" id="folder-input" webkitdirectory hidden>
 			</div>
 		</section>
-
-		<section class="shelf" id="continue-watching" aria-labelledby="cw-title" hidden>
-			<div class="section-head">
-				<h2 id="cw-title">Continue watching</h2>
-				<button type="button" class="link-btn" id="cw-clear">Clear all</button>
-			</div>
-			<ul class="shelf-list" id="cw-list"></ul>
-		</section>
 	</main>
 
-	<footer class="site-footer">
-		<p>Free &amp; open source (MIT) · Made by <a href="https://github.com/AbdulDevHub" rel="noopener" target="_blank">Abdul Khan</a></p>
-	</footer>
+	<!-- Continue watching: a column on the left (below the card on phones). Always shown so the layout never shifts -->
+	<aside class="shelf" id="continue-watching" aria-labelledby="cw-title">
+		<div class="section-head">
+			<h2 id="cw-title">Continue watching</h2>
+			<button type="button" class="clear-btn" id="cw-clear" hidden><span class="material-icon" aria-hidden="true">delete_sweep</span>Clear all</button>
+		</div>
+		<ul class="shelf-list" id="cw-list"></ul>
+		<p class="shelf-empty" id="cw-empty"><span class="material-icon" aria-hidden="true">history</span>Videos you watch will show up here so you can pick up where you left off.</p>
+	</aside>
 </div>
 
 <!-- About: features + FAQ. Kept in the page for search engines; opened from the header so the start screen never scrolls -->
@@ -163,7 +155,6 @@
 	</div>
 	<div class="about-body">
 		<section class="features" id="features" aria-labelledby="features-title">
-			<h2 id="features-title">Everything a desktop player does, without installing one</h2>
 			<ul class="feature-grid">
 				<li><span class="material-icon" aria-hidden="true">history</span><h3>Continue watching</h3><p>Your place and speed are saved for every file. One click brings you back to where you stopped.</p></li>
 				<li><span class="material-icon" aria-hidden="true">playlist_play</span><h3>Playlists &amp; folders</h3><p>Drop a whole season or a folder of lectures. Episodes play in order, one after another.</p></li>
@@ -184,6 +175,8 @@
 			<details><summary>Does it remember where I stopped?</summary><p>Yes. Your position and speed are saved in your browser, and partly watched videos appear in the Continue Watching shelf. In Chrome and Edge one click reopens the file; in other browsers you pick the file again and it resumes.</p></details>
 			<details><summary>Does it work offline?</summary><p>Yes. After your first visit the player works without an internet connection, and you can install it as an app. It is also available as a Chrome extension.</p></details>
 		</section>
+
+		<p class="about-credit">Free &amp; open source (MIT) · Made by <a href="https://github.com/AbdulDevHub" rel="noopener" target="_blank">Abdul Khan</a></p>
 	</div>
 </dialog>
 
@@ -299,6 +292,7 @@
 			<legend>Playback</legend>
 			<label class="switch"><input type="checkbox" name="autoplay"><span>Start playing when I open a file<small>Videos from Continue watching always open paused.</small></span></label>
 			<label class="switch"><input type="checkbox" name="resume"><span>Resume where I left off<small>Remembers position and speed for each file.</small></span></label>
+			<label class="switch"><input type="checkbox" name="seekPreview"><span>Preview frames on the progress bar<small>Shows a thumbnail and time when you hover the bar.</small></span></label>
 			<label class="row">Skip amount
 				<select name="skip"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="30">30 seconds</option></select>
 			</label>
