@@ -166,6 +166,12 @@
 								<input type="search" id="gallery-search" placeholder="Search videos" aria-label="Search videos" autocomplete="off" spellcheck="false">
 								<kbd aria-hidden="true">/</kbd>
 							</label>
+							<div class="cols-toggle" role="group" aria-label="Videos per row">
+								<span class="material-icon" aria-hidden="true">grid_view</span>
+								<button type="button" data-cols="3" aria-pressed="false" title="3 videos per row">3</button>
+								<button type="button" data-cols="5" aria-pressed="true" title="5 videos per row">5</button>
+								<button type="button" data-cols="10" aria-pressed="false" title="10 videos per row">10</button>
+							</div>
 							<div class="sort-picker">
 								<button type="button" class="gallery-sort" id="gallery-sort" aria-haspopup="listbox" aria-expanded="false" aria-controls="gallery-sort-menu" aria-label="Sort videos by: Name">
 									<span class="material-icon" aria-hidden="true">sort</span><span class="sort-label" id="gallery-sort-label">Name</span><span class="material-icon caret" aria-hidden="true">expand_more</span>
@@ -182,7 +188,7 @@
 							<button type="button" class="icon-btn material-icon" id="gallery-change" aria-label="Switch folder" title="Switch folder">folder_open</button>
 						</div>
 					</div>
-					<ul class="gallery-grid" id="gallery-grid" aria-label="Videos in this folder"></ul>
+					<ul class="gallery-grid" id="gallery-grid" data-cols="5" aria-label="Videos in this folder"></ul>
 					<p class="gallery-none" id="gallery-none" role="status" hidden></p>
 				</div>
 			</div>

@@ -637,6 +637,132 @@ kbd {
   }
 }
 
+/* Videos-per-row switch: one pill like the Single / Gallery switch */
+.cols-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  height: 2.25rem;
+  padding: 0 0.2rem 0 0.6rem;
+  border-radius: 999px;
+  color: var(--text2);
+  background: color-mix(in srgb, var(--surface2) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--surface4) 70%, transparent);
+
+  & > .material-icon {
+    margin-right: 0.2rem;
+    font-size: 1.1rem;
+  }
+
+  & button {
+    min-width: 1.9rem;
+    height: 1.75rem;
+    padding: 0 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 999px;
+    color: var(--text2);
+    border: 1px solid transparent;
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+
+    &:hover {
+      color: var(--text1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--video-bar);
+      outline-offset: 1px;
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--text1);
+      background: var(--surface3);
+      border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
+    }
+  }
+}
+
+.gallery-grid[data-cols="3"] {
+  --cols: 3;
+  gap: 1.75rem 1.25rem;
+
+  & .gc-name {
+    font-size: 1.05rem;
+  }
+}
+
+/* 10 per row: tighter gaps and smaller text so the cards stay readable */
+.gallery-grid[data-cols="10"] {
+  --cols: 10;
+  gap: 0.9rem 0.6rem;
+
+  & .gallery-card {
+    --radius: 0.6rem;
+  }
+
+  & .gc-name {
+    margin-top: 0.1rem;
+    font-size: 0.78rem;
+  }
+
+  & .gc-meta {
+    font-size: 0.68rem;
+  }
+
+  & .gc-duration,
+  & .gc-done {
+    padding: 0.05rem 0.3rem;
+    font-size: 0.62rem;
+  }
+
+  & .gc-duration {
+    right: 0.3rem;
+    bottom: 0.4rem;
+  }
+
+  & .gc-play,
+  & .gc-fallback {
+    font-size: 1.75rem;
+  }
+}
+
+/* Narrower windows can't fit as many: step the counts down */
+@media (max-width: 1100px) {
+  .gallery-grid[data-cols="5"] {
+    --cols: 4;
+  }
+
+  .gallery-grid[data-cols="10"] {
+    --cols: 7;
+  }
+}
+
+@media (max-width: 760px) {
+  .gallery-grid[data-cols="3"] {
+    --cols: 2;
+  }
+
+  .gallery-grid[data-cols="5"] {
+    --cols: 2;
+  }
+
+  .gallery-grid[data-cols="10"] {
+    --cols: 4;
+  }
+}
+
+@media (max-width: 420px) {
+  .gallery-grid[data-cols="3"],
+  .gallery-grid[data-cols="5"] {
+    --cols: 1;
+  }
+
+  .gallery-grid[data-cols="10"] {
+    --cols: 3;
+  }
+}
+
 /* Sort menu: a floating card under the pill, matching the site's surfaces */
 .sort-picker {
   position: relative;
@@ -715,7 +841,9 @@ kbd {
 .gallery-grid {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(13.5rem, 100%), 1fr));
+  /* Videos per row: 3, 5 (default) or 10, picked in the toolbar */
+  --cols: 5;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   align-content: start;
   gap: 1.25rem 1rem;
   min-height: 0;

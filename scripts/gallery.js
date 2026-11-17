@@ -17,6 +17,7 @@ const FOLDER_KEY = "gallery:folder" // older single-folder record
 const RECENT_KEY = "gallery:recent"
 const MODE_KEY = "lvp-home-mode"
 const SORT_KEY = "lvp-gallery-sort"
+const COLS_KEY = "lvp-gallery-cols"
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" })
 const baseName = (name) => name.replace(/\.[^.]+$/, "")
 
@@ -664,5 +665,16 @@ export function initGallery() {
 
   const [sort, dir] = (store.get(SORT_KEY) ?? "").split(":")
   setSort(sort || "name", sort ? Number(dir) : undefined)
+
+  // Videos per row: 3, 5 (default) or 10, remembered between visits
+  const colButtons = document.querySelectorAll(".cols-toggle button")
+  const setCols = (cols) => {
+    if (!["3", "5", "10"].includes(cols)) cols = "5"
+    grid.dataset.cols = cols
+    colButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.cols === cols)))
+    store.set(COLS_KEY, cols)
+  }
+  colButtons.forEach((b) => b.addEventListener("click", () => setCols(b.dataset.cols)))
+  setCols(store.get(COLS_KEY) ?? "5")
   setMode(store.get(MODE_KEY))
 }
