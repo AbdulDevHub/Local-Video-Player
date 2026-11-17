@@ -7,12 +7,14 @@ import { playlist } from "./playlist.js"
 import { toast } from "./hud.js"
 import { library } from "./library.js"
 import { setDropHandler, walkDirectoryHandle } from "./files.js"
-import { extractCoverImage, extractMp4Cover } from "./cover.js"
+import { BAD_FRAME, frameBadness, isBadFrame } from "./frames.js"
+import { extractCoverImage } from "./cover.js"
 
 const MEDIA_RE = /\.(mp4|m4v|mkv|webm|mov|avi|ogv|ts|m2ts|mpeg|mpg|3gp|3g2|mp3|m4a|aac|wav|flac|ogg|oga|opus)$/i
 const AUDIO_RE = /\.(mp3|m4a|aac|wav|flac|oga|opus)$/i
 const SUBTITLE_RE = /\.(srt|vtt)$/i
-const FOLDER_KEY = "gallery:folder"
+const FOLDER_KEY = "gallery:folder" // older single-folder record
+const RECENT_KEY = "gallery:recent"
 const MODE_KEY = "lvp-home-mode"
 const SORT_KEY = "lvp-gallery-sort"
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" })
@@ -22,15 +24,21 @@ const $ = (id) => document.getElementById(id)
 const hero = { single: $("hero-single"), gallery: $("hero-gallery") }
 const modeButtons = document.querySelectorAll(".mode-btn")
 const emptyView = $("gallery-empty")
+const loadingView = $("gallery-loading")
+const loadingText = $("gallery-loading-text")
 const contentView = $("gallery-content")
 const grid = $("gallery-grid")
 const folderLabel = $("gallery-folder")
 const countLabel = $("gallery-count")
-const sortSelect = $("gallery-sort")
+const sortButton = $("gallery-sort")
+const sortLabel = $("gallery-sort-label")
+const sortMenu = $("gallery-sort-menu")
+const sortOptions = [...sortMenu.children]
 const searchInput = $("gallery-search")
 const noMatches = $("gallery-none")
 const dirButton = $("gallery-dir")
-const reopenButton = $("gallery-reopen")
+const recentSection = $("gallery-recent")
+const recentList = $("gallery-recent-list")
 const folderInput = $("gallery-input")
 
 // Natural direction for each sort; the arrow button flips it
@@ -61,23 +69,52 @@ const store = {
 }
 
 // ----------------------------- MODE -----------------------------
-function setMode(mode) {
+function setMode(mode, { fromClick = false } = {}) {
   state.mode = mode === "gallery" ? "gallery" : "single"
   store.set(MODE_KEY, state.mode)
   modeButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode)))
   hero.single.hidden = state.mode !== "single"
   hero.gallery.hidden = state.mode !== "gallery"
-  if (state.mode === "gallery" && !state.items.length) restoreFolder()
+  if (state.mode === "gallery" && !state.items.length) restoreFolder({ fromClick })
 }
 
 // ----------------------------- LOADING A FOLDER -----------------------------
-async function loadFolder(entries, { name, directory } = {}) {
+// Spinner while the folder is read, so the short wait never looks like nothing happened
+function showLoading(text) {
+  loadingText.textContent = text
+  loadingView.hidden = false
+  emptyView.hidden = true
+  contentView.hidden = true
+}
+
+function hideLoading() {
+  loadingView.hidden = true
+  const hasItems = state.items.length > 0
+  contentView.hidden = !hasItems
+  emptyView.hidden = hasItems
+}
+
+// entries can be a promise (e.g. a folder still being listed): the spinner shows right away
+async function loadFolder(entriesOrPromise, { name, directory } = {}) {
+  const token = ++loadToken
+  showLoading(`Opening “${name || "folder"}”…`)
+  let entries
+  try {
+    entries = await entriesOrPromise
+  } catch (error) {
+    if (token === loadToken) hideLoading()
+    throw error
+  }
+  if (token !== loadToken) return
+  // Only the folder's own files: videos inside its subfolders are left out
+  entries = entries.filter((e) => !e.nested)
   const media = entries.filter((e) => MEDIA_RE.test(e.name))
   if (!media.length) {
+    hideLoading()
     toast("No playable files found in that folder. Try MP4, MKV, WebM, MP3…")
     return
   }
-  const token = ++loadToken
+  showLoading(`Reading ${media.length} ${media.length === 1 ? "video" : "videos"}…`)
   const subs = entries.filter((e) => SUBTITLE_RE.test(e.name))
 
   const items = await Promise.all(
@@ -108,12 +145,11 @@ async function loadFolder(entries, { name, directory } = {}) {
   state.items = items.filter(Boolean)
   folderLabel.textContent = name || "Videos"
   searchInput.value = state.query = ""
+  loadingView.hidden = true
   emptyView.hidden = true
   contentView.hidden = false
 
-  if (directory) {
-    db.put({ key: FOLDER_KEY, handle: directory, name: directory.name, cached: Date.now() }).catch(() => {})
-  }
+  if (directory) rememberFolder(directory)
   await refreshRecords()
   extractMissing(token)
 }
@@ -122,7 +158,7 @@ async function pickFolder() {
   if ("showDirectoryPicker" in window) {
     try {
       const directory = await window.showDirectoryPicker({ mode: "read" })
-      return loadFolder(await walkDirectoryHandle(directory), { name: directory.name, directory })
+      return loadFolder(walkDirectoryHandle(directory), { name: directory.name, directory })
     } catch (error) {
       if (error.name === "AbortError") return
       console.warn("Folder picker failed, falling back to the file input:", error)
@@ -131,26 +167,88 @@ async function pickFolder() {
   folderInput.click()
 }
 
-// Chrome/Edge: bring back the last folder. Permission may need a click, so offer a button then
-async function restoreFolder() {
-  const saved = await db.get(FOLDER_KEY).catch(() => null)
-  if (!saved?.handle || state.items.length) return
-  const open = async () => loadFolder(await walkDirectoryHandle(saved.handle), { name: saved.name, directory: saved.handle })
+// ----------------------------- RECENT FOLDERS -----------------------------
+// Chrome/Edge keep folder handles in IndexedDB, so a folder can be reopened after a reload without
+// browsing to it again. The browser may still ask "Allow this site to view files?" once per visit
+// (or never again if you pick "Allow on every visit").
+const RECENT_LIMIT = 8
+
+async function recentFolders() {
+  const saved = await db.get(RECENT_KEY).catch(() => null)
+  if (saved?.folders) return saved.folders
+  // Older versions kept only the last folder
+  const last = await db.get(FOLDER_KEY).catch(() => null)
+  return last?.handle ? [{ handle: last.handle, name: last.name, opened: last.cached ?? Date.now() }] : []
+}
+
+async function saveRecent(folders) {
+  await db.put({ key: RECENT_KEY, folders: folders.slice(0, RECENT_LIMIT), cached: Date.now() }).catch(() => {})
+  db.delete(FOLDER_KEY).catch(() => {})
+}
+
+async function rememberFolder(directory) {
+  const folders = await recentFolders()
+  const kept = []
+  for (const folder of folders) {
+    if (!(await folder.handle.isSameEntry(directory).catch(() => false))) kept.push(folder)
+  }
+  await saveRecent([{ handle: directory, name: directory.name, opened: Date.now() }, ...kept])
+  renderRecent()
+}
+
+async function forgetFolder(folder) {
+  const folders = await recentFolders()
+  const kept = []
+  for (const f of folders) {
+    if (!(await f.handle.isSameEntry(folder.handle).catch(() => false))) kept.push(f)
+  }
+  await saveRecent(kept)
+  renderRecent()
+}
+
+// Asks for access if needed (needs a click), then loads the folder
+async function openRecent(folder, { prompt = true } = {}) {
   try {
-    if ((await saved.handle.queryPermission({ mode: "read" })) === "granted") return await open()
+    let permission = await folder.handle.queryPermission({ mode: "read" })
+    if (permission !== "granted" && prompt) permission = await folder.handle.requestPermission({ mode: "read" })
+    if (permission !== "granted") return false
+    await loadFolder(walkDirectoryHandle(folder.handle), { name: folder.name, directory: folder.handle })
+    return true
   } catch {
-    return
+    toast(`“${folder.name}” can't be opened anymore. It may have been moved or deleted.`)
+    forgetFolder(folder)
+    return false
   }
-  reopenButton.lastElementChild.textContent = `Reopen “${saved.name}”`
-  reopenButton.hidden = false
-  reopenButton.onclick = async () => {
-    try {
-      if ((await saved.handle.requestPermission({ mode: "read" })) === "granted") await open()
-    } catch {
-      reopenButton.hidden = true
-      toast("That folder can't be opened anymore. Choose it again.")
-    }
-  }
+}
+
+async function renderRecent() {
+  const folders = await recentFolders()
+  recentList.replaceChildren(
+    ...folders.map((folder) => {
+      const li = document.createElement("li")
+      li.innerHTML = `
+        <button type="button" class="recent-open"><span class="material-icon" aria-hidden="true">folder</span><span class="recent-name"></span></button>
+        <button type="button" class="recent-remove material-icon">close</button>`
+      li.querySelector(".recent-name").textContent = folder.name
+      li.querySelector(".recent-open").title = `Open ${folder.name}`
+      li.querySelector(".recent-open").addEventListener("click", () => openRecent(folder))
+      const remove = li.querySelector(".recent-remove")
+      remove.title = "Remove from recent folders"
+      remove.setAttribute("aria-label", `Remove ${folder.name} from recent folders`)
+      remove.addEventListener("click", () => forgetFolder(folder))
+      return li
+    })
+  )
+  recentSection.hidden = !folders.length
+}
+
+// On load or when switching to Gallery: reopen the last folder if the browser still allows it.
+// fromClick: the Gallery button was just clicked, so the permission prompt may be shown
+async function restoreFolder({ fromClick = false } = {}) {
+  if (state.items.length) return
+  await renderRecent()
+  const [last] = await recentFolders()
+  if (last && !state.items.length) await openRecent(last, { prompt: fromClick })
 }
 
 // ----------------------------- WATCH HISTORY -----------------------------
@@ -164,13 +262,13 @@ async function refreshRecords() {
   render()
 }
 
-// Shows the File Explorer-style poster (cover art or first real frame), never a mid-watch frame
+// Swaps in the newest saved frame (the player grabs a fresh one while you watch)
 function setThumb(item) {
-  const poster = item.record?.poster
-  if (!poster || poster === item.thumbBlob) return
+  const thumb = item.record?.thumb
+  if (!thumb || thumb === item.thumbBlob) return
   if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl)
-  item.thumbBlob = poster
-  item.thumbUrl = URL.createObjectURL(poster)
+  item.thumbBlob = thumb
+  item.thumbUrl = URL.createObjectURL(thumb)
 }
 
 const watched = (item) => Boolean(item.record?.updated)
@@ -179,13 +277,24 @@ const position = (item) => item.record?.time || 0
 const isInProgress = (item) => position(item) > 5 && position(item) < duration(item) * 0.97
 const isFinished = (item) => duration(item) > 0 && position(item) >= duration(item) * 0.97
 
-// Bumped when the poster rules change, so older posters get redone once
-const POSTER_VERSION = 2
+// Bumped when the thumbnail rules change, so files get checked again once
+const PROBE_VERSION = 4
 
-// Reads durations and posters for files that need them, two at a time
+// A saved thumbnail that's mostly black, white or one colour gets replaced
+async function isBadThumb(blob) {
+  try {
+    const bitmap = await createImageBitmap(blob)
+    const bad = isBadFrame(bitmap)
+    bitmap.close()
+    return bad
+  } catch {
+    return false
+  }
+}
+
+// Reads durations and preview frames, two files at a time
 async function extractMissing(token) {
-  // Files already probed with the current rules (even if that failed) aren't tried again
-  const queue = state.items.filter((item) => item.record?.posterVersion !== POSTER_VERSION || !duration(item))
+  const queue = state.items.filter((item) => item.record?.probeVersion !== PROBE_VERSION || !duration(item))
   const worker = async () => {
     while (queue.length && token === loadToken) {
       // Don't compete with the player for the decoder
@@ -194,14 +303,21 @@ async function extractMissing(token) {
         continue
       }
       const item = queue.shift()
-      const meta = await probe(item.file, item.isAudio)
+      const oldThumb = item.record?.thumb
+      // thumbAt changes when the player saves a new frame, so a frame grabbed meanwhile isn't overwritten
+      const oldThumbAt = item.record?.thumbAt ?? 0
+      // Music: the track's own picture (ID3 cover art), like the player shows while it plays
+      const cover = item.isAudio && !oldThumb ? await extractCoverImage(item.file) : null
+      const wantThumb = !item.isAudio && (!oldThumb || (await isBadThumb(oldThumb)))
+      const meta = await probe(item.file, wantThumb)
+      if (meta && cover) meta.thumb = cover
       if (token !== loadToken) continue
       // Merge into the latest record so watch progress written meanwhile is kept
       const latest = (await db.get(item.key).catch(() => null)) ?? { key: item.key, name: item.name, size: item.size }
       if (meta?.duration) latest.duration ||= meta.duration
-      if (meta?.poster) latest.poster = meta.poster
-      delete latest.thumb // old mid-watch frames from the removed shelf
-      latest.posterVersion = POSTER_VERSION
+      if (meta?.thumb && (latest.thumbAt ?? 0) === oldThumbAt) latest.thumb = meta.thumb
+      else if (cover && !latest.thumb) latest.thumb = cover
+      latest.probeVersion = PROBE_VERSION
       latest.cached = Date.now()
       latest.isAudio = item.isAudio
       await db.put(latest).catch(() => {})
@@ -214,12 +330,12 @@ async function extractMissing(token) {
   await Promise.all([worker(), worker()])
 }
 
-// Matches Windows File Explorer, worked out by comparing against its real thumbnails:
-// embedded cover art (MP4 covr, MP3 ID3) wins; otherwise the first frame that isn't "blank",
-// i.e. no single colour covers more than ~70% of it (black intros, solid title cards, small logos
-// are skipped). If every frame is blank, the very first frame is used.
-async function probe(file, isAudio) {
-  const cover = (await extractMp4Cover(file)) ?? (await extractCoverImage(file))
+// Duration plus a preview frame 5% of the way in. If that frame is mostly black, white or one
+// colour, later spots are tried (10%, 15%… up to 80%) and the first good one wins; if none is
+// good, the least bad one is used.
+const SPOTS = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+async function probe(file, wantThumb) {
   const video = document.createElement("video")
   const url = URL.createObjectURL(file)
   video.muted = true
@@ -236,58 +352,30 @@ async function probe(file, isAudio) {
     return done
   }
   try {
-    const loaded = wait("loadeddata")
+    const loaded = wait("loadedmetadata")
     video.src = url
     await loaded
     // Some WebM files don't store their length: seeking far past the end makes the browser work it out
     if (!Number.isFinite(video.duration)) await seek(1e9)
     const length = Number.isFinite(video.duration) ? video.duration : 0
-    if (cover || isAudio || !video.videoWidth) return { duration: length, poster: cover }
+    if (!wantThumb || !video.videoWidth || !length) return { duration: length }
 
-    const sample = document.createElement("canvas")
-    sample.width = 64
-    sample.height = 36
-    const sampleContext = sample.getContext("2d", { willReadFrequently: true })
-    const isBlank = () => {
-      sampleContext.drawImage(video, 0, 0, sample.width, sample.height)
-      const pixels = sampleContext.getImageData(0, 0, sample.width, sample.height).data
-      const counts = new Map()
-      let top = 0
-      for (let i = 0; i < pixels.length; i += 4) {
-        const colour = ((pixels[i] >> 4) << 8) | ((pixels[i + 1] >> 4) << 4) | (pixels[i + 2] >> 4)
-        const count = (counts.get(colour) ?? 0) + 1
-        counts.set(colour, count)
-        if (count > top) top = count
-      }
-      return top / (pixels.length / 4) > 0.7
+    let best = null
+    for (const spot of SPOTS) {
+      const time = Math.min(Math.max(length * spot, 1), length - 0.1)
+      await seek(time)
+      const badness = frameBadness(video)
+      if (!best || badness < best.badness) best = { time, badness }
+      if (badness <= BAD_FRAME) break
     }
-
-    await seek(0)
-    let found = isBlank() ? null : 0
-    if (found === null && length) {
-      // Step forward 1, 2, 4, 8… seconds to find content, then narrow down to where it starts
-      let low = 0
-      for (let t = 1; t < length && found === null; t = Math.min(t * 2, length - 0.05)) {
-        await seek(t)
-        if (isBlank()) low = t
-        else found = t
-        if (t >= length - 0.05) break
-      }
-      while (found !== null && found - low > 0.1) {
-        const mid = (low + found) / 2
-        await seek(mid)
-        if (isBlank()) low = mid
-        else found = mid
-      }
-    }
-    await seek(found ?? 0)
+    if (video.currentTime !== best.time) await seek(best.time)
 
     const canvas = document.createElement("canvas")
     canvas.width = 384
     canvas.height = Math.round((384 * video.videoHeight) / video.videoWidth)
     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
-    const poster = await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.8))
-    return { duration: length, poster }
+    const thumb = await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.75))
+    return { duration: length, thumb }
   } catch {
     return null
   } finally {
@@ -326,7 +414,10 @@ function sorted() {
 function setSort(sort, dir = DEFAULT_DIR[sort]) {
   state.sort = sort in DEFAULT_DIR ? sort : "name"
   state.dir = dir === -1 ? -1 : 1
-  sortSelect.value = state.sort
+  sortOptions.forEach((li) => li.setAttribute("aria-selected", String(li.dataset.value === state.sort)))
+  const chosen = sortOptions.find((li) => li.dataset.value === state.sort)
+  sortLabel.textContent = chosen.dataset.label ?? chosen.dataset.value
+  sortButton.setAttribute("aria-label", `Sort videos by: ${sortLabel.textContent}`)
   dirButton.textContent = state.dir === 1 ? "arrow_upward" : "arrow_downward"
   store.set(SORT_KEY, `${state.sort}:${state.dir}`)
   render()
@@ -371,6 +462,8 @@ function card(item) {
 // Parts that change once a thumbnail or duration arrives
 function fillCard(li, item) {
   const thumb = li.querySelector(".gc-thumb")
+  // Shimmer until the preview frame has been read
+  li.classList.toggle("pending", !item.thumbUrl && item.record?.probeVersion !== PROBE_VERSION)
   thumb.querySelectorAll("img, .gc-duration, .gc-progress, .gc-done").forEach((el) => el.remove())
   if (item.thumbUrl) {
     const img = document.createElement("img")
@@ -439,21 +532,94 @@ async function play(item) {
   await playlist.play(index)
 }
 
+// ----------------------------- SORT MENU -----------------------------
+// A styled listbox instead of the browser's <select>: click or Enter/Space/↓ to open,
+// ↑/↓/Home/End to move, Enter/Space to pick, Esc or a click outside to close
+function initSortMenu() {
+  let active = 0
+  sortOptions.forEach((li, i) => {
+    li.id = `gallery-sort-${li.dataset.value}`
+    li.addEventListener("click", () => pick(i))
+    li.addEventListener("mousemove", () => highlight(i))
+  })
+  // Material icon names are text too, so read the label from the text node only
+  sortOptions.forEach((li) => {
+    li.dataset.label = [...li.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join("").trim()
+  })
+
+  const highlight = (i) => {
+    active = (i + sortOptions.length) % sortOptions.length
+    sortOptions.forEach((li, j) => li.classList.toggle("active", j === active))
+    sortMenu.setAttribute("aria-activedescendant", sortOptions[active].id)
+  }
+  const open = () => {
+    sortMenu.hidden = false
+    sortButton.setAttribute("aria-expanded", "true")
+    highlight(sortOptions.findIndex((li) => li.dataset.value === state.sort))
+    sortMenu.focus()
+  }
+  const close = ({ focusButton = true } = {}) => {
+    if (sortMenu.hidden) return
+    sortMenu.hidden = true
+    sortButton.setAttribute("aria-expanded", "false")
+    if (focusButton) sortButton.focus()
+  }
+  const pick = (i) => {
+    const value = sortOptions[i].dataset.value
+    close()
+    if (value !== state.sort) setSort(value)
+  }
+
+  sortButton.addEventListener("click", () => (sortMenu.hidden ? open() : close()))
+  sortButton.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault()
+      open()
+    }
+  })
+  sortMenu.addEventListener("keydown", (e) => {
+    const keys = {
+      ArrowDown: () => highlight(active + 1),
+      ArrowUp: () => highlight(active - 1),
+      Home: () => highlight(0),
+      End: () => highlight(sortOptions.length - 1),
+      Enter: () => pick(active),
+      " ": () => pick(active),
+      Escape: () => close(),
+      Tab: () => close({ focusButton: false }),
+    }
+    if (!keys[e.key]) return
+    if (e.key !== "Tab") e.preventDefault()
+    e.stopPropagation()
+    keys[e.key]()
+  })
+  document.addEventListener("pointerdown", (e) => {
+    if (!sortMenu.hidden && !e.target.closest(".sort-picker")) close({ focusButton: false })
+  })
+}
+
 // ----------------------------- SETUP -----------------------------
 export function initGallery() {
-  modeButtons.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)))
+  modeButtons.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode, { fromClick: true })))
   $("gallery-pick").addEventListener("click", pickFolder)
-  $("gallery-change").addEventListener("click", pickFolder)
+  // Back to the folder chooser, with recent folders one click away
+  $("gallery-change").addEventListener("click", () => {
+    renderRecent()
+    contentView.hidden = true
+    emptyView.hidden = false
+    $("gallery-pick").focus()
+  })
   folderInput.addEventListener("change", () => {
     const files = [...folderInput.files]
     folderInput.value = ""
     if (!files.length) return
-    loadFolder(files.map((file) => ({ name: file.name, file })), {
+    // webkitRelativePath is "Folder/file.mp4"; anything deeper is in a subfolder
+    loadFolder(files.map((file) => ({ name: file.name, file, nested: file.webkitRelativePath.split("/").length > 2 })), {
       name: files[0].webkitRelativePath.split("/")[0],
     })
   })
 
-  sortSelect.addEventListener("change", () => setSort(sortSelect.value))
+  initSortMenu()
 
   searchInput.addEventListener("input", () => {
     state.query = searchInput.value

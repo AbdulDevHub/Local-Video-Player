@@ -357,6 +357,122 @@ kbd {
   }
 }
 
+/* Folder loading: a spinning ring in the site's gold */
+.gallery-loading {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1rem;
+  color: var(--text2);
+  font-size: 0.95rem;
+
+  & .spinner {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 3px solid color-mix(in srgb, var(--video-bar) 20%, transparent);
+    border-top-color: var(--video-bar);
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Recent folders: one pill per folder, like the header pills */
+.gallery-recent {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  max-width: 40rem;
+
+  & h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  & ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  & li {
+    display: flex;
+    align-items: center;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface2) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--surface4) 70%, transparent);
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:hover,
+    &:focus-within {
+      background: var(--surface3);
+      border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
+    }
+  }
+
+  & .recent-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 16rem;
+    padding: 0.4rem 0.3rem 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    color: var(--text1);
+    border-radius: 999px;
+
+    & .material-icon {
+      font-size: 1.1rem;
+      color: var(--video-bar);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--video-bar);
+      outline-offset: 2px;
+    }
+  }
+
+  & .recent-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  & .recent-remove {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-right: 0.25rem;
+    font-size: 1rem;
+    border-radius: 50%;
+    color: var(--text2);
+
+    &:hover,
+    &:focus-visible {
+      color: #f07167;
+      background: color-mix(in srgb, #f07167 12%, transparent);
+    }
+  }
+}
+
 .gallery-content {
   flex: 1;
   min-height: 0;
@@ -497,25 +613,96 @@ kbd {
     border-radius: 999px;
     cursor: pointer;
 
+    gap: 0.4rem;
+    padding: 0 0.55rem 0 0.75rem;
+    font-size: 0.875rem;
+
     & .material-icon {
       font-size: 1.15rem;
     }
 
-    & select {
-      padding: 0.3rem 0.2rem;
-      font: inherit;
-      font-size: 0.875rem;
-      color: inherit;
-      background: transparent;
-      border: none;
-      outline: none;
-      cursor: pointer;
+    & .caret {
+      transition: rotate 0.2s;
+    }
 
-      & option {
-        color: var(--text1);
-        background: var(--surface2);
+    &[aria-expanded="true"] {
+      color: var(--text1);
+      background: var(--surface3);
+      border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
+
+      & .caret {
+        rotate: 180deg;
       }
     }
+  }
+}
+
+/* Sort menu: a floating card under the pill, matching the site's surfaces */
+.sort-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sort-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 10;
+  min-width: 12rem;
+  padding: 0.35rem;
+  list-style: none;
+  border-radius: 0.9rem;
+  background: var(--surface2);
+  border: 1px solid color-mix(in srgb, var(--surface4) 80%, transparent);
+  box-shadow: 0 1.25rem 2.5rem -1rem hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 25%));
+  animation: menu-in 0.14s ease-out;
+  outline: none;
+
+  & li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.875rem;
+    border-radius: 0.6rem;
+    color: var(--text2);
+    cursor: pointer;
+    user-select: none;
+
+    & .material-icon {
+      font-size: 1.15rem;
+    }
+
+    & .check {
+      margin-left: auto;
+      color: var(--video-bar);
+      visibility: hidden;
+    }
+
+    &:hover,
+    &.active {
+      color: var(--text1);
+      background: var(--surface3);
+    }
+
+    &[aria-selected="true"] {
+      color: var(--text1);
+
+      & > .material-icon:first-child {
+        color: var(--video-bar);
+      }
+
+      & .check {
+        visibility: visible;
+      }
+    }
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
   }
 }
 
@@ -537,6 +724,16 @@ kbd {
   padding: 0.3rem 0.4rem 1rem;
   margin: -0.3rem -0.4rem 0;
   scrollbar-width: thin;
+}
+
+/* Thumbnail still being read: a soft light sweeps across the placeholder */
+.pending .gallery-card .gc-thumb {
+  background: linear-gradient(110deg, var(--surface3) 30%, var(--surface4) 50%, var(--surface3) 70%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+
+  & .gc-fallback {
+    opacity: 0.35;
+  }
 }
 
 .gallery-card {

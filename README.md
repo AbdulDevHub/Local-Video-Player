@@ -15,7 +15,7 @@ Use it as a **website** (installable, works offline) or as a **Chrome extension*
 
 ## Features
 
-- **Single or Gallery start screen:** a switch at the top left picks between the drop zone and Gallery view. Gallery shows every video in a folder with the same thumbnail File Explorer shows (cover art, or the first frame past any black or blank intro), its length and how far you got. Search by name (press <kbd>/</kbd>) and sort by name, last viewed, date added, duration or in progress. In Chrome and Edge the folder comes back next time.
+- **Single or Gallery start screen:** a switch at the top left picks between the drop zone and Gallery view. Gallery shows every video in a folder with a thumbnail, its length and how far you got (only the folder itself, not its subfolders). Search by name (press <kbd>/</kbd>) and sort by name, last viewed, date added, duration or in progress. In Chrome and Edge your recent folders are remembered, so after a refresh you can reopen one with a click instead of browsing to it again.
 - **Resume where you stopped:** your position and speed are saved for every file.
 - **Playlists and folders:** drop several files or a whole folder. Files play in natural order (episode 2 before episode 10) and the next one starts automatically.
 - **Subtitles:** SRT and VTT, matched to the video by file name. You can shift the timing in 0.1 s steps and resize the text.
@@ -23,7 +23,7 @@ Use it as a **website** (installable, works offline) or as a **Chrome extension*
 - **500% volume boost** for quiet recordings.
 - **Power tools:** A-B loop, frame-by-frame stepping, full-resolution screenshots and jumping to 0–90% with the number keys.
 - **Smart stretch to fill:** the stretch adapts to your screen and window size, leaves vertical videos alone and skips videos that would be distorted too much. Crop-to-fill and arrow-key fine-tuning are there too.
-- **Settings:** choose which buttons appear on the player (hide subtitles, playlist, zoom and more), plus autoplay, resume, skip amount (5/10/30 s), stretch limits and theme.
+- **Settings:** choose which buttons appear on the player (hide subtitles, playlist, zoom and more), plus autoplay, resume, skip amount (5/10/30 s), stretch limits, theme and sideways-wheel scrolling (for thumb-wheel mice).
 - **On-screen feedback** for every shortcut, and a cheat sheet that opens with <kbd>?</kbd>.
 - **Light, dark or system theme.**
 - **Works offline and installs as an app.** Once installed, it shows up under *Open with* for video files on your computer.

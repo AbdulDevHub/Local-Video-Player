@@ -30,10 +30,10 @@ export function setDropHandler(handler) {
 }
 
 // ----------------------------- COLLECTING ENTRIES -----------------------------
-// Entry: { name, file?, handle? }
+// Entry: { name, file?, handle?, nested? } — nested files sit in a subfolder of the chosen folder
 export async function walkDirectoryHandle(dir, depth = 0, out = []) {
   for await (const entry of dir.values()) {
-    if (entry.kind === "file") out.push({ name: entry.name, handle: entry })
+    if (entry.kind === "file") out.push({ name: entry.name, handle: entry, nested: depth > 0 })
     else if (depth < 3) await walkDirectoryHandle(entry, depth + 1, out)
   }
   return out
@@ -42,7 +42,10 @@ export async function walkDirectoryHandle(dir, depth = 0, out = []) {
 function walkEntry(entry, depth = 0) {
   // Legacy FileSystemEntry API (Firefox/Safari folder drops)
   if (entry.isFile) {
-    return new Promise((resolve) => entry.file((file) => resolve([{ name: file.name, file }]), () => resolve([])))
+    // depth 0 is a dropped file, 1 is a file in a dropped folder, deeper ones are in its subfolders
+    return new Promise((resolve) =>
+      entry.file((file) => resolve([{ name: file.name, file, nested: depth > 1 }]), () => resolve([]))
+    )
   }
   if (depth > 3) return Promise.resolve([])
   const reader = entry.createReader()

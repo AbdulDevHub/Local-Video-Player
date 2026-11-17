@@ -144,12 +144,19 @@
 				<div class="gallery-empty" id="gallery-empty">
 					<span class="material-icon drop-icon" aria-hidden="true">video_library</span>
 					<h2 class="drop-title">Browse a whole folder of videos</h2>
-					<p class="drop-hint">Pick a folder (or drop one here) to see every video in it, with your progress.</p>
+					<p class="drop-hint">Pick a folder (or drop one here) to see the videos in it, with your progress.</p>
 					<div class="drop-actions">
 						<button type="button" class="btn primary" id="gallery-pick"><span class="material-icon" aria-hidden="true">folder_open</span>Choose folder</button>
-						<button type="button" class="btn" id="gallery-reopen" hidden><span class="material-icon" aria-hidden="true">history</span><span></span></button>
+					</div>
+					<div class="gallery-recent" id="gallery-recent" hidden>
+						<h3>Recent folders</h3>
+						<ul id="gallery-recent-list"></ul>
 					</div>
 					<input type="file" id="gallery-input" webkitdirectory hidden>
+				</div>
+				<div class="gallery-loading" id="gallery-loading" role="status" hidden>
+					<span class="spinner" aria-hidden="true"></span>
+					<p id="gallery-loading-text">Opening folder…</p>
 				</div>
 				<div class="gallery-content" id="gallery-content" hidden>
 					<div class="gallery-toolbar">
@@ -159,17 +166,20 @@
 								<input type="search" id="gallery-search" placeholder="Search videos" aria-label="Search videos" autocomplete="off" spellcheck="false">
 								<kbd aria-hidden="true">/</kbd>
 							</label>
-							<label class="gallery-sort"><span class="material-icon" aria-hidden="true">sort</span>
-								<select id="gallery-sort" aria-label="Sort videos by">
-									<option value="name">Name</option>
-									<option value="viewed">Last viewed</option>
-									<option value="added">Date added</option>
-									<option value="duration">Duration</option>
-									<option value="progress">In progress</option>
-								</select>
-							</label>
+							<div class="sort-picker">
+								<button type="button" class="gallery-sort" id="gallery-sort" aria-haspopup="listbox" aria-expanded="false" aria-controls="gallery-sort-menu" aria-label="Sort videos by: Name">
+									<span class="material-icon" aria-hidden="true">sort</span><span class="sort-label" id="gallery-sort-label">Name</span><span class="material-icon caret" aria-hidden="true">expand_more</span>
+								</button>
+								<ul class="sort-menu" id="gallery-sort-menu" role="listbox" aria-label="Sort videos by" tabindex="-1" hidden>
+									<li role="option" data-value="name"><span class="material-icon" aria-hidden="true">sort_by_alpha</span>Name<span class="material-icon check" aria-hidden="true">check</span></li>
+									<li role="option" data-value="viewed"><span class="material-icon" aria-hidden="true">history</span>Last viewed<span class="material-icon check" aria-hidden="true">check</span></li>
+									<li role="option" data-value="added"><span class="material-icon" aria-hidden="true">calendar_today</span>Date added<span class="material-icon check" aria-hidden="true">check</span></li>
+									<li role="option" data-value="duration"><span class="material-icon" aria-hidden="true">timer</span>Duration<span class="material-icon check" aria-hidden="true">check</span></li>
+									<li role="option" data-value="progress"><span class="material-icon" aria-hidden="true">timelapse</span>In progress<span class="material-icon check" aria-hidden="true">check</span></li>
+								</ul>
+							</div>
 							<button type="button" class="icon-btn material-icon" id="gallery-dir" aria-label="Reverse order" title="Reverse order">arrow_upward</button>
-							<button type="button" class="icon-btn material-icon" id="gallery-change" aria-label="Choose another folder" title="Choose another folder">folder_open</button>
+							<button type="button" class="icon-btn material-icon" id="gallery-change" aria-label="Switch folder" title="Switch folder">folder_open</button>
 						</div>
 					</div>
 					<ul class="gallery-grid" id="gallery-grid" aria-label="Videos in this folder"></ul>
@@ -338,6 +348,10 @@
 				<select name="maxStretch"><option value="1.15">Subtle (up to 15%)</option><option value="1.35">Normal (up to 35%)</option><option value="99">Always fill the screen</option></select>
 			</label>
 			<p class="hint">The stretch adapts to your screen and window size. If filling would distort a video more than this, it is left as is.</p>
+		</fieldset>
+		<fieldset>
+			<legend>Mouse</legend>
+			<label class="switch"><input type="checkbox" name="sidewaysScroll"><span>Scroll up and down with the sideways wheel<small>For mice with a thumb wheel (like the MX Master): turning it scrolls the page and lists vertically.</small></span></label>
 		</fieldset>
 		<fieldset>
 			<legend>Appearance</legend>
