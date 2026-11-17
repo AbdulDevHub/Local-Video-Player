@@ -4,6 +4,7 @@ import { initFiles } from "./files.js"
 import { initPlaylist } from "./playlist.js"
 import { initSubtitles } from "./subtitles.js"
 import { initLibrary } from "./library.js"
+import { initGallery } from "./gallery.js"
 import { initShortcuts } from "./shortcuts.js"
 import { initTools } from "./tools.js"
 import { initSettings } from "./settings.js"
@@ -33,6 +34,7 @@ initSubtitles()
 initShortcuts()
 initTools()
 initLibrary()
+initGallery()
 initSettings({ getTheme, setTheme })
 initDialogs()
 initWebApp()

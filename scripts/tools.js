@@ -87,6 +87,8 @@ function screenshot() {
 // ----------------------------- KEYS -----------------------------
 function onKeyDown(e) {
   if (e.ctrlKey || e.altKey || e.metaKey) return
+  // Typing in a text box (e.g. the gallery search) never triggers shortcuts
+  if (e.target.closest?.("input:not([type=range]):not([type=checkbox]), textarea, [contenteditable]")) return
   if (e.key === "?") return shortcutsDialog.toggle()
   if (e.shiftKey || utils.isOverlayOpen()) return
 

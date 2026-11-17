@@ -22,7 +22,7 @@
 <meta property="og:image" content="https://abduldevhub.github.io/Local-Video-Player/images/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Local Video Player start screen with a drop zone and a Continue Watching shelf">
+<meta property="og:image:alt" content="Local Video Player start screen with a drop zone and a Single / Gallery switch">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Local Video Player: play any video file right in your browser">
@@ -56,7 +56,7 @@
   "license": "https://opensource.org/licenses/MIT",
   "featureList": [
     "Plays MP4, MKV, WebM, MOV, MP3, WAV, FLAC and more without uploading",
-    "Continue Watching shelf that resumes where you left off",
+    "Gallery view: browse a folder of videos sorted by name, last viewed, date added, duration or progress",
     "Playlists from multiple files or whole folders",
     "SRT and VTT subtitles with timing and size controls",
     "Playback speed from 0.1x to 16x with presets",
@@ -90,7 +90,7 @@
     {
       "@type": "Question",
       "name": "Does it remember where I stopped?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Your position and speed are saved in your browser, and partly watched videos appear in the Continue Watching shelf. In Chrome and Edge one click reopens the file; in other browsers you pick the file again and it resumes." }
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Your position and speed are saved in your browser, and Gallery view shows how far you got in every video of a folder, so you can sort by last viewed or in progress and pick up where you left off." }
     },
     {
       "@type": "Question",
@@ -106,6 +106,10 @@
 <!-- ============================== START SCREEN ============================== -->
 <div class="landing droppable" id="drag-panel">
 	<header class="site-header">
+		<div class="mode-toggle" role="group" aria-label="Start screen view">
+			<button type="button" class="mode-btn" data-mode="single" aria-pressed="true"><span class="material-icon" aria-hidden="true">movie</span>Single</button>
+			<button type="button" class="mode-btn" data-mode="gallery" aria-pressed="false"><span class="material-icon" aria-hidden="true">grid_view</span>Gallery</button>
+		</div>
 		<nav aria-label="Main">
 			<button type="button" class="nav-link web-only" data-open-about="faq">FAQ</button>
 			<a class="nav-link web-only" href="https://github.com/AbdulDevHub/Local-Video-Player#install-the-chrome-extension" rel="noopener" target="_blank">Extension</a>
@@ -119,6 +123,7 @@
 
 	<main class="home">
 		<section class="hero" aria-labelledby="hero-title">
+			<div class="hero-single" id="hero-single">
 			<p class="eyebrow"><span class="material-icon" aria-hidden="true">lock</span> 100% Private · Works Offline · No Uploads</p>
 			<h1 id="hero-title">Play any video on your computer, <em>right in your browser</em>.</h1>
 			<div class="drop-zone" id="drop-zone">
@@ -132,18 +137,48 @@
 				<input type="file" id="file-input" multiple hidden accept="video/*,audio/*,.mkv,.ts,.m2ts,.flac,.srt,.vtt">
 				<input type="file" id="folder-input" webkitdirectory hidden>
 			</div>
+			</div>
+
+			<!-- Gallery: every video in a folder, with progress, sortable -->
+			<div class="gallery" id="hero-gallery" hidden>
+				<div class="gallery-empty" id="gallery-empty">
+					<span class="material-icon drop-icon" aria-hidden="true">video_library</span>
+					<h2 class="drop-title">Browse a whole folder of videos</h2>
+					<p class="drop-hint">Pick a folder (or drop one here) to see every video in it, with your progress.</p>
+					<div class="drop-actions">
+						<button type="button" class="btn primary" id="gallery-pick"><span class="material-icon" aria-hidden="true">folder_open</span>Choose folder</button>
+						<button type="button" class="btn" id="gallery-reopen" hidden><span class="material-icon" aria-hidden="true">history</span><span></span></button>
+					</div>
+					<input type="file" id="gallery-input" webkitdirectory hidden>
+				</div>
+				<div class="gallery-content" id="gallery-content" hidden>
+					<div class="gallery-toolbar">
+						<h2 class="gallery-title"><span class="material-icon" aria-hidden="true">folder</span><span id="gallery-folder"></span><span class="gallery-count" id="gallery-count"></span></h2>
+						<div class="gallery-controls">
+							<label class="gallery-search"><span class="material-icon" aria-hidden="true">search</span>
+								<input type="search" id="gallery-search" placeholder="Search videos" aria-label="Search videos" autocomplete="off" spellcheck="false">
+								<kbd aria-hidden="true">/</kbd>
+							</label>
+							<label class="gallery-sort"><span class="material-icon" aria-hidden="true">sort</span>
+								<select id="gallery-sort" aria-label="Sort videos by">
+									<option value="name">Name</option>
+									<option value="viewed">Last viewed</option>
+									<option value="added">Date added</option>
+									<option value="duration">Duration</option>
+									<option value="progress">In progress</option>
+								</select>
+							</label>
+							<button type="button" class="icon-btn material-icon" id="gallery-dir" aria-label="Reverse order" title="Reverse order">arrow_upward</button>
+							<button type="button" class="icon-btn material-icon" id="gallery-change" aria-label="Choose another folder" title="Choose another folder">folder_open</button>
+						</div>
+					</div>
+					<ul class="gallery-grid" id="gallery-grid" aria-label="Videos in this folder"></ul>
+					<p class="gallery-none" id="gallery-none" role="status" hidden></p>
+				</div>
+			</div>
 		</section>
 	</main>
 
-	<!-- Continue watching: a column on the left (below the card on phones). Always shown so the layout never shifts -->
-	<aside class="shelf" id="continue-watching" aria-labelledby="cw-title">
-		<div class="section-head">
-			<h2 id="cw-title">Continue watching</h2>
-			<button type="button" class="clear-btn" id="cw-clear" hidden><span class="material-icon" aria-hidden="true">delete_sweep</span>Clear all</button>
-		</div>
-		<ul class="shelf-list" id="cw-list"></ul>
-		<p class="shelf-empty" id="cw-empty"><span class="material-icon" aria-hidden="true">history</span>Videos you watch will show up here so you can pick up where you left off.</p>
-	</aside>
 </div>
 
 <!-- About: features + FAQ. Kept in the page for search engines; opened from the header so the start screen never scrolls -->
@@ -155,7 +190,7 @@
 	<div class="about-body">
 		<section class="features" id="features" aria-labelledby="features-title">
 			<ul class="feature-grid">
-				<li><span class="material-icon" aria-hidden="true">history</span><h3>Continue watching</h3><p>Your place and speed are saved for every file. One click brings you back to where you stopped.</p></li>
+				<li><span class="material-icon" aria-hidden="true">grid_view</span><h3>Gallery view</h3><p>Open a folder to see every video with its progress. Sort by name, last viewed, date added, duration or in progress.</p></li>
 				<li><span class="material-icon" aria-hidden="true">playlist_play</span><h3>Playlists &amp; folders</h3><p>Drop a whole season or a folder of lectures. Episodes play in order, one after another.</p></li>
 				<li><span class="material-icon" aria-hidden="true">subtitles</span><h3>Subtitles</h3><p>SRT and VTT, matched by file name. Fix out-of-sync timing and resize the text.</p></li>
 				<li><span class="material-icon" aria-hidden="true">speed</span><h3>Speed control</h3><p>0.1× to 16× in fine steps, plus one-key presets for 1.5×, 2×, 2.5×, 3× and 4×.</p></li>
@@ -171,7 +206,7 @@
 			<details><summary>Are my videos uploaded anywhere?</summary><p>No. Files are played directly from your device by your browser. Nothing is uploaded, and there are no accounts, ads or tracking.</p></details>
 			<details><summary>Which file formats can it play?</summary><p>Anything your browser can decode: usually MP4 (H.264, H.265 on supported hardware, AV1), WebM, MKV, MOV, OGG, MP3, M4A, WAV and FLAC. Chrome and Edge support the most formats.</p></details>
 			<details><summary>How do I add subtitles?</summary><p>Drop an .srt or .vtt file onto the player, or drop it together with the video. Subtitles with the same file name as the video are matched automatically. You can shift the timing and change the text size from the subtitles menu.</p></details>
-			<details><summary>Does it remember where I stopped?</summary><p>Yes. Your position and speed are saved in your browser, and partly watched videos appear in the Continue Watching shelf. In Chrome and Edge one click reopens the file; in other browsers you pick the file again and it resumes.</p></details>
+			<details><summary>Does it remember where I stopped?</summary><p>Yes. Your position and speed are saved in your browser, and Gallery view shows how far you got in every video of a folder, so you can sort by last viewed or in progress and pick up where you left off.</p></details>
 			<details><summary>Does it work offline?</summary><p>Yes. After your first visit the player works without an internet connection, and you can install it as an app. It is also available as a Chrome extension.</p></details>
 		</section>
 
@@ -289,7 +324,7 @@
 		</fieldset>
 		<fieldset>
 			<legend>Playback</legend>
-			<label class="switch"><input type="checkbox" name="autoplay"><span>Start playing when I open a file<small>Videos from Continue watching always open paused.</small></span></label>
+			<label class="switch"><input type="checkbox" name="autoplay"><span>Start playing when I open a file</span></label>
 			<label class="switch"><input type="checkbox" name="resume"><span>Resume where I left off<small>Remembers position and speed for each file.</small></span></label>
 			<label class="switch"><input type="checkbox" name="seekPreview"><span>Preview frames on the progress bar<small>Shows a thumbnail and time when you hover the bar.</small></span></label>
 			<label class="row">Skip amount

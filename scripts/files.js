@@ -22,10 +22,16 @@ const fileInput = document.querySelector("#file-input")
 const folderInput = document.querySelector("#folder-input")
 const supportsHandles = "showOpenFilePicker" in window
 let appendNext = false
+let dropHandler = null // the gallery takes over drops on the start screen while it's showing
+
+// Gallery mode: (entries, { name, directory }) => true when it handled the drop
+export function setDropHandler(handler) {
+  dropHandler = handler
+}
 
 // ----------------------------- COLLECTING ENTRIES -----------------------------
 // Entry: { name, file?, handle? }
-async function walkDirectoryHandle(dir, depth = 0, out = []) {
+export async function walkDirectoryHandle(dir, depth = 0, out = []) {
   for await (const entry of dir.values()) {
     if (entry.kind === "file") out.push({ name: entry.name, handle: entry })
     else if (depth < 3) await walkDirectoryHandle(entry, depth + 1, out)
@@ -58,6 +64,8 @@ function entriesFromDataTransfer(dataTransfer) {
     const handles = items.map((item) => item.getAsFileSystemHandle())
     return Promise.all(handles).then(async (resolved) => {
       const out = []
+      // A single dropped folder: remember it so the gallery can show its name and reopen it later
+      if (resolved.length === 1 && resolved[0]?.kind === "directory") out.directory = resolved[0]
       for (const [i, handle] of resolved.entries()) {
         if (!handle) {
           if (plainFiles[i]) out.push({ name: plainFiles[i].name, file: plainFiles[i] })
@@ -167,6 +175,7 @@ export function initFiles() {
     e.preventDefault()
     hideOverlay()
     const entries = await entriesFromDataTransfer(e.dataTransfer)
+    if (dropHandler?.(entries)) return
     openEntries(entries)
   })
   // Avoid the browser navigating to a file dropped anywhere else

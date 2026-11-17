@@ -1,4 +1,4 @@
-// Tiny IndexedDB key-value wrapper for the Continue Watching library
+// Tiny IndexedDB key-value wrapper for the watch history (and the last gallery folder)
 const DB_NAME = "local-video-player"
 const STORE = "library"
 let dbPromise

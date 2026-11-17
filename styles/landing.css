@@ -3,16 +3,16 @@
   --max: 84rem;
   --radius: 1rem;
   /* One screen, no scrolling: everything else lives in the About and Settings sheets.
-     Continue watching runs down the left; the nav pills and the main card sit on the right */
+     The view switch and nav pills sit on top; the main card fills the rest */
   height: 100vh;
   height: 100dvh;
   overflow: hidden auto;
   display: grid;
-  grid-template-columns: clamp(14rem, 22vw, 19rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
-    "side head"
-    "side main";
+    "head"
+    "main";
   gap: clamp(0.75rem, 2.5vh, 1.5rem) clamp(1rem, 2.5vw, 2rem);
   padding: clamp(0.75rem, 3vh, 1.75rem) max(1rem, (100% - var(--max)) / 2);
   font-size: 1rem;
@@ -31,10 +31,6 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-  }
-
-  & > .shelf {
-    grid-area: side;
   }
 
   & a {
@@ -125,36 +121,55 @@ kbd {
   }
 }
 
-/* Small pill with an icon, matching the header pills; turns red on hover since it deletes */
-.clear-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.75rem 0.3rem 0.55rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 999px;
-  color: var(--text2);
-  background: color-mix(in srgb, var(--surface2) 80%, transparent);
-  border: 1px solid color-mix(in srgb, var(--surface4) 70%, transparent);
-  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
-
-  & .material-icon {
-    font-size: 1.05rem;
-  }
-
-  &:hover,
-  &:focus-visible {
-    color: #f07167;
-    background: color-mix(in srgb, #f07167 10%, var(--surface2));
-    border-color: color-mix(in srgb, #f07167 45%, transparent);
-  }
-}
-
-/* -------- Header: every link as its own pill, icons on the right -------- */
+/* -------- Header: view switch on the left, every link as its own pill on the right -------- */
 .site-header {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+
+  /* Single / Gallery switch: one pill like the nav pills, the chosen half lit like their hover state */
+  & .mode-toggle {
+    display: inline-flex;
+    gap: 0.2rem;
+    padding: 0.15rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface2) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--surface4) 70%, transparent);
+  }
+
+  & .mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem 0.35rem 0.65rem;
+    font-size: 0.875rem;
+    border-radius: 999px;
+    color: var(--text2);
+    border: 1px solid transparent;
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+
+    & .material-icon {
+      font-size: 1.1rem;
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: var(--text1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--video-bar);
+      outline-offset: 2px;
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--text1);
+      background: var(--surface3);
+      border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
+    }
+  }
 
   & nav {
     display: flex;
@@ -288,86 +303,255 @@ kbd {
   font-size: 0.9rem;
 }
 
-/* -------- Continue watching: a column that scrolls on its own -------- */
-.shelf {
+/* -------- Gallery: every video in a folder, scrolling inside the card -------- */
+.hero-single {
+  display: contents;
+}
+
+.hero:has(> .gallery:not([hidden])) {
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: clamp(1rem, 3vh, 1.75rem) clamp(1rem, 2.5vw, 1.75rem);
+  text-align: start;
+}
+
+.gallery {
+  flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.landing .shelf h2 {
-  font-size: 1.05rem;
-  margin-bottom: 0;
+.gallery-empty {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.9rem;
+  text-align: center;
+
+  & .drop-icon {
+    font-size: 3rem;
+    color: var(--video-bar);
+    animation: float 3.5s ease-in-out infinite;
+  }
+
+  & .drop-title {
+    margin: 0;
+    font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+  }
+
+  & .drop-hint {
+    max-width: 38ch;
+    color: var(--text2);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  & .drop-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
 }
 
-.section-head {
+.gallery-content {
+  flex: 1;
+  min-height: 0;
   display: flex;
+  flex-direction: column;
+}
+
+.gallery-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  /* Line the heading up with the nav pills next to it */
-  min-height: 2.25rem;
+  margin-bottom: clamp(0.75rem, 2vh, 1.25rem);
+}
+
+.landing .gallery-title {
+  display: flex;
   align-items: center;
-  margin-bottom: clamp(0.75rem, 2.5vh, 1.5rem);
-  font-size: 0.875rem;
-}
-
-.shelf-list {
-  list-style: none;
-  display: grid;
-  align-content: start;
-  gap: 1.1rem;
-  min-height: 0;
-  overflow-y: auto;
-  /* Room for focus rings and the card shadows */
-  padding: 0.25rem 0.4rem 0.75rem 0.25rem;
-  margin: -0.25rem -0.4rem 0 -0.25rem;
-  scroll-snap-type: y proximity;
-  scrollbar-width: thin;
-
-  & > li {
-    scroll-snap-align: start;
-  }
-
-  &:empty {
-    display: none;
-  }
-}
-
-.shelf-empty {
-  display: grid;
-  justify-items: center;
-  gap: 0.6rem;
-  padding: 1.5rem 1rem;
-  text-align: center;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--text2);
-  border-radius: var(--radius);
-  border: 1px dashed color-mix(in srgb, var(--text2) 30%, transparent);
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.1rem;
 
   & .material-icon {
-    font-size: 1.75rem;
     color: var(--video-bar);
+  }
+
+  & #gallery-folder {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 }
 
-.cw-card {
-  position: relative;
+.gallery-count {
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--text2);
+  background: var(--surface3);
+}
 
-  & .cw-open {
-    display: grid;
-    gap: 0.35rem;
-    width: 100%;
-    text-align: start;
-    border-radius: var(--radius);
+/* Sort menu and buttons share the header pill look */
+.gallery-controls {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  min-width: 0;
 
-    &:focus-visible {
-      outline: 2px solid var(--video-bar);
-      outline-offset: 4px;
+  & .icon-btn,
+  & .gallery-search,
+  & .gallery-sort {
+    color: var(--text2);
+    background: color-mix(in srgb, var(--surface2) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--surface4) 70%, transparent);
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+
+    &:hover,
+    &:focus-within {
+      color: var(--text1);
+      background: var(--surface3);
+      border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
     }
   }
 
-  & .cw-thumb {
+  & .icon-btn {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1.2rem;
+
+    &:disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  }
+
+  & .gallery-search {
+    flex: 1 1 12rem;
+    max-width: 17rem;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 2.25rem;
+    padding: 0 0.45rem 0 0.7rem;
+    border-radius: 999px;
+    cursor: text;
+
+    & .material-icon {
+      font-size: 1.15rem;
+    }
+
+    & input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.3rem 0;
+      font: inherit;
+      font-size: 0.875rem;
+      color: var(--text1);
+      background: transparent;
+      border: none;
+      outline: none;
+
+      &::placeholder {
+        color: var(--text2);
+      }
+    }
+
+    /* Hint for the "/" shortcut, hidden once you start typing */
+    & kbd {
+      font-size: 0.75rem;
+    }
+
+    &:has(input:not(:placeholder-shown)) kbd {
+      display: none;
+    }
+
+    @media (hover: none) {
+      & kbd {
+        display: none;
+      }
+    }
+  }
+
+  & .gallery-sort {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    height: 2.25rem;
+    padding: 0 0.4rem 0 0.7rem;
+    border-radius: 999px;
+    cursor: pointer;
+
+    & .material-icon {
+      font-size: 1.15rem;
+    }
+
+    & select {
+      padding: 0.3rem 0.2rem;
+      font: inherit;
+      font-size: 0.875rem;
+      color: inherit;
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+
+      & option {
+        color: var(--text1);
+        background: var(--surface2);
+      }
+    }
+  }
+}
+
+.gallery-none {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text2);
+}
+
+.gallery-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(13.5rem, 100%), 1fr));
+  align-content: start;
+  gap: 1.25rem 1rem;
+  min-height: 0;
+  overflow-y: auto;
+  /* Room for focus rings and the card shadows */
+  padding: 0.3rem 0.4rem 1rem;
+  margin: -0.3rem -0.4rem 0;
+  scrollbar-width: thin;
+}
+
+.gallery-card {
+  display: grid;
+  gap: 0.3rem;
+  width: 100%;
+  text-align: start;
+  border-radius: var(--radius);
+
+  &:focus-visible {
+    outline: 2px solid var(--video-bar);
+    outline-offset: 4px;
+  }
+
+  & .gc-thumb {
     position: relative;
     display: grid;
     place-items: center;
@@ -387,12 +571,12 @@ kbd {
     }
   }
 
-  & .cw-fallback {
+  & .gc-fallback {
     font-size: 2.5rem;
     color: var(--text2);
   }
 
-  & .cw-play {
+  & .gc-play {
     position: absolute;
     font-size: 3rem;
     color: white;
@@ -403,25 +587,55 @@ kbd {
     transition: opacity 0.25s, scale 0.25s;
   }
 
-  & .cw-progress {
+  & .gc-duration,
+  & .gc-done {
+    position: absolute;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 0.35rem;
+    color: white;
+    background: rgb(0 0 0 / 0.7);
+  }
+
+  & .gc-duration {
+    right: 0.45rem;
+    bottom: 0.55rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .gc-done {
+    top: 0.45rem;
+    left: 0.45rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+
+    & .material-icon {
+      font-size: 0.9rem;
+      color: var(--video-bar);
+    }
+  }
+
+  & .gc-progress {
     position: absolute;
     inset: auto 0 0;
     height: 4px;
     background: linear-gradient(to right, var(--video-bar) var(--p), rgb(255 255 255 / 0.25) var(--p));
   }
 
-  & .cw-open:is(:hover, :focus-visible) {
+  &:is(:hover, :focus-visible) {
     & img {
       scale: 1.05;
     }
 
-    & .cw-play {
+    & .gc-play {
       opacity: 1;
       scale: 1;
     }
   }
 
-  & .cw-name {
+  & .gc-name {
     margin-top: 0.25rem;
     font-weight: 600;
     overflow: hidden;
@@ -429,33 +643,9 @@ kbd {
     text-overflow: ellipsis;
   }
 
-  & .cw-meta {
+  & .gc-meta {
     font-size: 0.8rem;
     color: var(--text2);
-  }
-
-  & .cw-remove {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    width: 2rem;
-    height: 2rem;
-    font-size: 1.1rem;
-    border-radius: 50%;
-    color: white;
-    background: rgb(0 0 0 / 0.55);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  &:is(:hover, :focus-within) .cw-remove {
-    opacity: 1;
-  }
-
-  @media (hover: none) {
-    & .cw-remove {
-      opacity: 1;
-    }
   }
 }
 
@@ -587,33 +777,27 @@ kbd {
   font-size: 0.85rem;
 }
 
-/* Tablets and phones: nav, then the card, then Continue watching as a sideways row. The page may scroll here */
+/* Tablets and phones: the card takes its natural height and the page may scroll */
 @media (max-width: 760px) {
   .landing {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-    grid-template-areas:
-      "head"
-      "main"
-      "side";
+    grid-template-rows: auto auto;
   }
 
-  /* Let the card take its natural height instead of shrinking to fit one screen */
   .landing main,
-  .landing .hero,
-  .landing > .shelf {
+  .landing .hero {
     min-height: auto;
   }
 
-  .landing .hero {
+  .landing .hero,
+  .gallery-content,
+  .gallery-grid {
     overflow: visible;
   }
 
-  .shelf-list {
-    grid-auto-flow: column;
-    grid-auto-columns: min(15rem, 70%);
-    overflow: auto hidden;
-    scroll-snap-type: x proximity;
+  /* Search gets its own full-width row above the sort buttons */
+  .gallery-controls .gallery-search {
+    flex-basis: 100%;
+    max-width: none;
   }
 }
 
@@ -653,6 +837,7 @@ kbd {
 }
 
 @media (max-height: 600px) and (min-width: 761px) {
+  .gallery-empty .drop-icon,
   .hero .eyebrow,
   .drop-zone .drop-icon,
   .drop-zone .drop-hint {

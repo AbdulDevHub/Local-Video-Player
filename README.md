@@ -15,7 +15,8 @@ Use it as a **website** (installable, works offline) or as a **Chrome extension*
 
 ## Features
 
-- **Continue watching:** your position and speed are saved for every file. The start screen shows partly watched videos with thumbnails, and in Chrome and Edge one click reopens the file, paused at the spot where you stopped.
+- **Single or Gallery start screen:** a switch at the top left picks between the drop zone and Gallery view. Gallery shows every video in a folder with the same thumbnail File Explorer shows (cover art, or the first frame past any black or blank intro), its length and how far you got. Search by name (press <kbd>/</kbd>) and sort by name, last viewed, date added, duration or in progress. In Chrome and Edge the folder comes back next time.
+- **Resume where you stopped:** your position and speed are saved for every file.
 - **Playlists and folders:** drop several files or a whole folder. Files play in natural order (episode 2 before episode 10) and the next one starts automatically.
 - **Subtitles:** SRT and VTT, matched to the video by file name. You can shift the timing in 0.1 s steps and resize the text.
 - **Speed control:** 0.1× to 16× in 0.1× steps, plus one-key presets for 1.5×, 2×, 2.5×, 3× and 4×.
@@ -29,13 +30,13 @@ Use it as a **website** (installable, works offline) or as a **Chrome extension*
 - **Integrates with your system's media controls** (play/pause, skip, next/previous track).
 - **Album art** from MP3 files is shown while the audio plays.
 
-![Start screen with the Continue Watching shelf](images/screenshot-home.png)
+![Start screen in Gallery view, showing a folder of videos with progress](images/screenshot-home.png)
 
 ## Use It Online
 
 Open **<https://abduldevhub.github.io/Local-Video-Player/>**, then drop a video onto the page or click **Choose files**. To install it as an app, use **Install app** on the start screen (Chrome/Edge), or *Add to Dock* / *Add to Home Screen* in Safari.
 
-It works in Chrome, Edge, Firefox and Safari. Chrome and Edge get the extras: one-click resume from Continue Watching, folder picking and *Open with* for the installed app.
+It works in Chrome, Edge, Firefox and Safari. Chrome and Edge get the extras: a remembered Gallery folder, folder picking and *Open with* for the installed app.
 
 ## Install the Chrome Extension
 
@@ -100,7 +101,8 @@ To work on the extension, load the folder with **Load unpacked** (see above) and
 | `scripts/player.js` | Core player: playback, speed, volume, fullscreen, stretching, seeking, saved progress |
 | `scripts/files.js` | Drag and drop, file and folder pickers, *Open with* for the installed app |
 | `scripts/playlist.js` | Play queue and auto-advance |
-| `scripts/library.js` | Continue Watching shelf (IndexedDB) |
+| `scripts/library.js` | Watch history: progress, duration, thumbnail, last viewed (IndexedDB) |
+| `scripts/gallery.js` | Single / Gallery switch and the sortable folder gallery |
 | `scripts/subtitles.js` | SRT/VTT parsing and rendering |
 | `scripts/settings.js` | Settings panel: visible buttons, autoplay, resume, skip amount, stretch limits |
 | `scripts/tools.js` | New shortcuts, A-B loop, frame steps, screenshots, on-screen feedback |
