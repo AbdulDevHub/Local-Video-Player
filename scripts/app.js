@@ -5,6 +5,7 @@ import { initPlaylist } from "./playlist.js"
 import { initSubtitles } from "./subtitles.js"
 import { initLibrary } from "./library.js"
 import { initGallery } from "./gallery.js"
+import { initSidewaysScroll } from "./scroll.js"
 import { initShortcuts } from "./shortcuts.js"
 import { initTools } from "./tools.js"
 import { initSettings } from "./settings.js"
@@ -35,6 +36,7 @@ initShortcuts()
 initTools()
 initLibrary()
 initGallery()
+initSidewaysScroll()
 initSettings({ getTheme, setTheme })
 initDialogs()
 initWebApp()

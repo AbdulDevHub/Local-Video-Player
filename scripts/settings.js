@@ -23,6 +23,7 @@ export const DEFAULTS = {
   skip: 10,
   stretchVertical: false,
   maxStretch: 1.35,
+  sidewaysScroll: true,
 }
 
 // Which control-bar elements each "controls.*" setting shows or hides
