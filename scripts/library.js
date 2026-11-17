@@ -48,7 +48,7 @@ function save({ thumbnail = false } = {}) {
   const entry = current
   Object.assign(entry, { time: currentTime, duration, updated: Date.now() })
   const canvas = thumbnail && !entry.isAudio ? drawThumbnail() : null
-  if (canvas) entry.thumbAt = Date.now()
+  if (canvas) Object.assign(entry, { thumbAt: Date.now(), thumbChecked: true }) // only good frames get here
   lastWrite = Date.now()
   return write(entry, canvas)
 }
@@ -79,6 +79,7 @@ export function initLibrary() {
       isAudio: file.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|flac|oga|opus)$/i.test(file.name),
       handle: handle ?? existing?.handle,
       thumb: coverBlob ?? existing?.thumb,
+      thumbChecked: coverBlob ? true : existing?.thumbChecked,
       updated: Date.now(),
     }
     needsThumbnail = true

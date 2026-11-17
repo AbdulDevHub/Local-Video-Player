@@ -7,7 +7,7 @@ import { playlist } from "./playlist.js"
 import { toast } from "./hud.js"
 import { library } from "./library.js"
 import { setDropHandler, walkDirectoryHandle } from "./files.js"
-import { BAD_FRAME, frameBadness, isBadFrame } from "./frames.js"
+import { BAD_FRAME, frameBadness } from "./frames.js"
 import { extractCoverImage } from "./cover.js"
 
 const MEDIA_RE = /\.(mp4|m4v|mkv|webm|mov|avi|ogv|ts|m2ts|mpeg|mpg|3gp|3g2|mp3|m4a|aac|wav|flac|ogg|oga|opus)$/i
@@ -277,24 +277,30 @@ const position = (item) => item.record?.time || 0
 const isInProgress = (item) => position(item) > 5 && position(item) < duration(item) * 0.97
 const isFinished = (item) => duration(item) > 0 && position(item) >= duration(item) * 0.97
 
-// Bumped when the thumbnail rules change, so files get checked again once
-const PROBE_VERSION = 4
+// Each record remembers whether its thumbnail has been judged ("thumbChecked"). Once checked,
+// a thumbnail is never looked at again, so opening a folder only does work for new files and
+// files whose thumbnail hasn't been checked yet. The player marks the frames it saves as checked.
+// Files that couldn't be read ("probed" without a duration) aren't retried on every visit either.
+const needsProbe = (item) => !item.record?.thumbChecked || (!duration(item) && !item.record?.probed)
 
-// A saved thumbnail that's mostly black, white or one colour gets replaced
-async function isBadThumb(blob) {
+// Saved thumbnails are only swapped when clearly bad (white screen, black screen, heavy fade),
+// so borderline ones that look fine aren't changed
+const CLEARLY_BAD = 0.8
+
+async function thumbBadness(blob) {
   try {
     const bitmap = await createImageBitmap(blob)
-    const bad = isBadFrame(bitmap)
+    const score = frameBadness(bitmap)
     bitmap.close()
-    return bad
+    return score
   } catch {
-    return false
+    return 0
   }
 }
 
 // Reads durations and preview frames, two files at a time
 async function extractMissing(token) {
-  const queue = state.items.filter((item) => item.record?.probeVersion !== PROBE_VERSION || !duration(item))
+  const queue = state.items.filter(needsProbe)
   const worker = async () => {
     while (queue.length && token === loadToken) {
       // Don't compete with the player for the decoder
@@ -308,8 +314,10 @@ async function extractMissing(token) {
       const oldThumbAt = item.record?.thumbAt ?? 0
       // Music: the track's own picture (ID3 cover art), like the player shows while it plays
       const cover = item.isAudio && !oldThumb ? await extractCoverImage(item.file) : null
-      const wantThumb = !item.isAudio && (!oldThumb || (await isBadThumb(oldThumb)))
-      const meta = await probe(item.file, wantThumb)
+      const wantThumb =
+        !item.isAudio && (!oldThumb || (!item.record?.thumbChecked && (await thumbBadness(oldThumb)) > CLEARLY_BAD))
+      // Length already known and thumbnail fine: just mark it checked, no need to open the file
+      const meta = wantThumb || !duration(item) ? await probe(item.file, wantThumb) : { duration: duration(item) }
       if (meta && cover) meta.thumb = cover
       if (token !== loadToken) continue
       // Merge into the latest record so watch progress written meanwhile is kept
@@ -317,7 +325,8 @@ async function extractMissing(token) {
       if (meta?.duration) latest.duration ||= meta.duration
       if (meta?.thumb && (latest.thumbAt ?? 0) === oldThumbAt) latest.thumb = meta.thumb
       else if (cover && !latest.thumb) latest.thumb = cover
-      latest.probeVersion = PROBE_VERSION
+      latest.thumbChecked = true
+      latest.probed = true
       latest.cached = Date.now()
       latest.isAudio = item.isAudio
       await db.put(latest).catch(() => {})
@@ -463,7 +472,7 @@ function card(item) {
 function fillCard(li, item) {
   const thumb = li.querySelector(".gc-thumb")
   // Shimmer until the preview frame has been read
-  li.classList.toggle("pending", !item.thumbUrl && item.record?.probeVersion !== PROBE_VERSION)
+  li.classList.toggle("pending", !item.thumbUrl && !item.record?.thumbChecked)
   thumb.querySelectorAll("img, .gc-duration, .gc-progress, .gc-done").forEach((el) => el.remove())
   if (item.thumbUrl) {
     const img = document.createElement("img")
