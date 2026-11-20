@@ -1,15 +1,11 @@
 // Theme switching and website-only extras (offline service worker, install button)
-const THEMES = ["dark", "light", "system"]
-const THEME_ICONS = { dark: "dark_mode", light: "light_mode", system: "brightness_auto" }
+// The theme is picked in Settings (Dark, Light or Match system)
 const root = document.documentElement
 
 export const getTheme = () => root.dataset.theme || "dark"
 
 export function setTheme(theme) {
-  const button = document.querySelector("#theme-btn")
   root.dataset.theme = theme
-  button.textContent = THEME_ICONS[theme]
-  button.title = `Theme: ${theme}`
   const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
   document.querySelector('meta[name="theme-color"]').content = dark ? "#16171b" : "#f4f5f7"
   try {
@@ -19,9 +15,6 @@ export function setTheme(theme) {
 
 export function initTheme() {
   setTheme(getTheme())
-  document.querySelector("#theme-btn").addEventListener("click", () => {
-    setTheme(THEMES[(THEMES.indexOf(getTheme()) + 1) % THEMES.length])
-  })
 }
 
 export function initWebApp() {
