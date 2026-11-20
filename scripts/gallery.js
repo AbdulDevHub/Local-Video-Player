@@ -528,10 +528,47 @@ function render() {
 
 const readSubtitle = (entry) => Promise.resolve(entry.file ?? entry.handle.getFile()).catch(() => undefined)
 
-// Plays the clicked video with the rest of the list queued in the order shown
+// A video's series and part number come from the last number in its name, so "Show Ep 3" is
+// part 3 of the series "show ep #". The last number is used so "Season 1 Episode 4" counts
+// episodes, and only names that match apart from that number count as the same series.
+function partOf(item) {
+  const name = baseName(item.name).toLowerCase()
+  const match = [...name.matchAll(/\d+/g)].pop()
+  if (!match) return null
+  return {
+    series: name.slice(0, match.index) + "#" + name.slice(match.index + match[0].length),
+    number: Number(match[0]),
+  }
+}
+
+// The clicked video followed by its later parts (searched in the whole folder, whatever the
+// search box or sort says). A video with no later parts plays on its own.
+function queueFor(item) {
+  const part = partOf(item)
+  if (!part) return [item]
+  const later = state.items
+    .map((it) => ({ it, p: partOf(it) }))
+    .filter(({ it, p }) => it !== item && p?.series === part.series && p.number > part.number)
+    .sort((a, b) => a.p.number - b.p.number || collator.compare(a.it.name, b.it.name))
+    .map(({ it }) => it)
+  return [item, ...later]
+}
+
+// Picks any video on screen, preferring ones not watched to the end yet
+function playRandom() {
+  const shown = visible()
+  const unfinished = shown.filter((item) => !isFinished(item))
+  const pool = unfinished.length ? unfinished : shown
+  if (!pool.length) return toast("No videos to pick from")
+  const item = pool[Math.floor(Math.random() * pool.length)]
+  toast(`Random pick: ${baseName(item.name)}`)
+  play(item)
+}
+
+// Plays the clicked video, with its next parts (if any) queued after it
 async function play(item) {
-  const order = visible()
-  const index = order.indexOf(item)
+  const order = queueFor(item)
+  const index = 0
   const items = order.map((it) => ({ name: it.name, file: it.file, handle: it.handle, forceResume: true }))
   // Only the clicked video waits for its subtitles; the rest load in the background
   if (item.subtitleEntry) items[index].subtitle = await readSubtitle(item.subtitleEntry)
@@ -650,6 +687,7 @@ export function initGallery() {
     searchInput.focus()
   })
   dirButton.addEventListener("click", () => setSort(state.sort, -state.dir))
+  $("gallery-random").addEventListener("click", playRandom)
 
   // Folders dropped on the start screen fill the gallery instead of playing right away
   setDropHandler((entries) => {
