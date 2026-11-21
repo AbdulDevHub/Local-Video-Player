@@ -1341,6 +1341,45 @@ kbd {
     border-radius: 0.5rem;
   }
 
+  & .row[hidden] {
+    display: none;
+  }
+
+  /* Small pill of choices, like the videos-per-row switch */
+  & .seg {
+    display: inline-flex;
+    gap: 0.15rem;
+    padding: 0.15rem;
+    border-radius: 999px;
+    background: var(--surface3);
+    border: 1px solid var(--surface4);
+
+    & button {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 999px;
+      color: var(--text2);
+      border: 1px solid transparent;
+      transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+
+      &:hover {
+        color: var(--text1);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--video-bar);
+        outline-offset: 1px;
+      }
+
+      &[aria-pressed="true"] {
+        color: var(--text1);
+        background: var(--surface2);
+        border-color: color-mix(in srgb, var(--video-bar) 45%, transparent);
+      }
+    }
+  }
+
   & .settings-actions {
     display: flex;
     justify-content: flex-end;

@@ -7,7 +7,7 @@ import { playlist } from "./playlist.js"
 import { toast } from "./hud.js"
 import { library } from "./library.js"
 import { setDropHandler, walkDirectoryHandle } from "./files.js"
-import { BAD_FRAME, frameBadness } from "./frames.js"
+import { pointOf, probe, thumbIsCurrent } from "./frames.js"
 import { extractCoverImage } from "./cover.js"
 
 const MEDIA_RE = /\.(mp4|m4v|mkv|webm|mov|avi|ogv|ts|m2ts|mpeg|mpg|3gp|3g2|mp3|m4a|aac|wav|flac|ogg|oga|opus)$/i
@@ -263,9 +263,10 @@ async function refreshRecords() {
   render()
 }
 
-// Swaps in the newest saved frame (the player grabs a fresh one while you watch)
+// In progress: the frame where you stopped. Otherwise: the video's chosen frame (0%, 5% or saved).
 function setThumb(item) {
-  const thumb = item.record?.thumb
+  const record = item.record
+  const thumb = (isInProgress(item) && record?.progressThumb) || record?.thumb
   if (!thumb || thumb === item.thumbBlob) return
   if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl)
   item.thumbBlob = thumb
@@ -278,28 +279,14 @@ const position = (item) => item.record?.time || 0
 const isInProgress = (item) => position(item) > 5 && position(item) < duration(item) * 0.97
 const isFinished = (item) => duration(item) > 0 && position(item) >= duration(item) * 0.97
 
-// Each record remembers whether its thumbnail has been judged ("thumbChecked"). Once checked,
-// a thumbnail is never looked at again, so opening a folder only does work for new files and
-// files whose thumbnail hasn't been checked yet. The player marks the frames it saves as checked.
-// Files that couldn't be read ("probed" without a duration) aren't retried on every visit either.
-const needsProbe = (item) => !item.record?.thumbChecked || (!duration(item) && !item.record?.probed)
+// A video's frame is (re)made when it doesn't match the video's chosen point: new files, records
+// from older versions, and after picking 0% or 5% in Settings. Saved ("custom") frames are kept.
+// Music uses the track's own cover art, read once. Files that couldn't be read ("probed" without a
+// duration) aren't retried on every visit.
+const wantsFrame = (item) => (item.isAudio ? !item.record?.thumbFor : !thumbIsCurrent(item.record))
+const needsProbe = (item) => wantsFrame(item) || (!duration(item) && !item.record?.probed)
 
-// Saved thumbnails are only swapped when clearly bad (white screen, black screen, heavy fade),
-// so borderline ones that look fine aren't changed
-const CLEARLY_BAD = 0.8
-
-async function thumbBadness(blob) {
-  try {
-    const bitmap = await createImageBitmap(blob)
-    const score = frameBadness(bitmap)
-    bitmap.close()
-    return score
-  } catch {
-    return 0
-  }
-}
-
-// Reads durations and preview frames, two files at a time
+// Reads durations and thumbnail frames, two files at a time
 async function extractMissing(token) {
   const queue = state.items.filter(needsProbe)
   const worker = async () => {
@@ -310,23 +297,27 @@ async function extractMissing(token) {
         continue
       }
       const item = queue.shift()
-      const oldThumb = item.record?.thumb
-      // thumbAt changes when the player saves a new frame, so a frame grabbed meanwhile isn't overwritten
-      const oldThumbAt = item.record?.thumbAt ?? 0
+      const point = pointOf(item.record)
+      const wantFrame = wantsFrame(item) && point !== "custom"
       // Music: the track's own picture (ID3 cover art), like the player shows while it plays
-      const cover = item.isAudio && !oldThumb ? await extractCoverImage(item.file) : null
-      const wantThumb =
-        !item.isAudio && (!oldThumb || (!item.record?.thumbChecked && (await thumbBadness(oldThumb)) > CLEARLY_BAD))
-      // Length already known and thumbnail fine: just mark it checked, no need to open the file
-      const meta = wantThumb || !duration(item) ? await probe(item.file, wantThumb) : { duration: duration(item) }
-      if (meta && cover) meta.thumb = cover
+      const cover = item.isAudio && wantFrame ? await extractCoverImage(item.file) : null
+      const percent = wantFrame && !item.isAudio ? point : null
+      // Length already known and frame up to date: no need to open the file
+      const meta = percent !== null || !duration(item) ? await probe(item.file, percent) : { duration: duration(item) }
       if (token !== loadToken) continue
       // Merge into the latest record so watch progress written meanwhile is kept
       const latest = (await db.get(item.key).catch(() => null)) ?? { key: item.key, name: item.name, size: item.size }
       if (meta?.duration) latest.duration ||= meta.duration
-      if (meta?.thumb && (latest.thumbAt ?? 0) === oldThumbAt) latest.thumb = meta.thumb
-      else if (cover && !latest.thumb) latest.thumb = cover
-      latest.thumbChecked = true
+      // Skip if the point was changed in the player meanwhile
+      if (wantFrame && pointOf(latest) === point) {
+        if (item.isAudio) {
+          if (cover) latest.thumb = cover
+          latest.thumbFor = "cover"
+        } else {
+          if (meta?.thumb) latest.thumb = meta.thumb
+          latest.thumbFor = point // even if unreadable, so it isn't retried every visit
+        }
+      }
       latest.probed = true
       latest.cached = Date.now()
       latest.isAudio = item.isAudio
@@ -338,61 +329,6 @@ async function extractMissing(token) {
     if (state.sort === "duration") render()
   }
   await Promise.all([worker(), worker()])
-}
-
-// Duration plus a preview frame 5% of the way in. If that frame is mostly black, white or one
-// colour, later spots are tried (10%, 15%… up to 80%) and the first good one wins; if none is
-// good, the least bad one is used.
-const SPOTS = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8]
-
-async function probe(file, wantThumb) {
-  const video = document.createElement("video")
-  const url = URL.createObjectURL(file)
-  video.muted = true
-  video.preload = "auto"
-  const wait = (event) =>
-    new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("timeout")), 8000)
-      video.addEventListener(event, () => (clearTimeout(timer), resolve()), { once: true })
-      video.addEventListener("error", () => (clearTimeout(timer), reject(video.error)), { once: true })
-    })
-  const seek = (time) => {
-    const done = wait("seeked")
-    video.currentTime = time
-    return done
-  }
-  try {
-    const loaded = wait("loadedmetadata")
-    video.src = url
-    await loaded
-    // Some WebM files don't store their length: seeking far past the end makes the browser work it out
-    if (!Number.isFinite(video.duration)) await seek(1e9)
-    const length = Number.isFinite(video.duration) ? video.duration : 0
-    if (!wantThumb || !video.videoWidth || !length) return { duration: length }
-
-    let best = null
-    for (const spot of SPOTS) {
-      const time = Math.min(Math.max(length * spot, 1), length - 0.1)
-      await seek(time)
-      const badness = frameBadness(video)
-      if (!best || badness < best.badness) best = { time, badness }
-      if (badness <= BAD_FRAME) break
-    }
-    if (video.currentTime !== best.time) await seek(best.time)
-
-    const canvas = document.createElement("canvas")
-    canvas.width = 384
-    canvas.height = Math.round((384 * video.videoHeight) / video.videoWidth)
-    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
-    const thumb = await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.75))
-    return { duration: length, thumb }
-  } catch {
-    return null
-  } finally {
-    video.removeAttribute("src")
-    video.load()
-    URL.revokeObjectURL(url)
-  }
 }
 
 // ----------------------------- SORTING -----------------------------
@@ -473,7 +409,7 @@ function card(item) {
 function fillCard(li, item) {
   const thumb = li.querySelector(".gc-thumb")
   // Shimmer until the preview frame has been read
-  li.classList.toggle("pending", !item.thumbUrl && !item.record?.thumbChecked)
+  li.classList.toggle("pending", !item.thumbUrl && wantsFrame(item))
   thumb.querySelectorAll("img, .gc-duration, .gc-progress, .gc-done").forEach((el) => el.remove())
   if (item.thumbUrl) {
     const img = document.createElement("img")

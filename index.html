@@ -346,6 +346,14 @@
 			<label class="row">Skip amount
 				<select name="skip"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="30">30 seconds</option></select>
 			</label>
+			<div class="row" id="thumb-point-row" hidden>
+				<span id="thumb-point-label">This video's thumbnail</span>
+				<div class="seg" role="group" aria-labelledby="thumb-point-label">
+					<button type="button" data-point="0" title="The very first frame">0%</button>
+					<button type="button" data-point="5" title="5% of the way in (default)">5%</button>
+					<button type="button" data-point="custom" title="Save the frame on screen now as the thumbnail">Current</button>
+				</div>
+			</div>
 		</fieldset>
 		<fieldset>
 			<legend>Stretch to fill</legend>

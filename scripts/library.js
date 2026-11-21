@@ -2,30 +2,20 @@
 // The gallery reads it to show progress and to sort by "Last viewed" and "In progress".
 import { bus, elements, utils, state, STORAGE_PREFIX } from "./player.js"
 import { db } from "./db.js"
-import { isBadFrame } from "./frames.js"
+import { probe, snapshot, toJpeg } from "./frames.js"
+import { toast } from "./hud.js"
 
 const MAX_AGE = 365 * 24 * 60 * 60 * 1000
 let current = null // the library entry for the open file
 let lastWrite = 0
 let pendingSave = Promise.resolve()
 let needsThumbnail = false
+let currentFile = null
 
-// Draws the current frame synchronously (the video may be unloaded right after, e.g. on close)
-function drawThumbnail() {
-  const video = elements.video
-  if (!video.videoWidth || video.readyState < 2) return null
-  // Paused on a black, white or blank frame: keep the thumbnail it already has
-  if (isBadFrame(video)) return null
-  const canvas = document.createElement("canvas")
-  canvas.width = 384
-  canvas.height = Math.round((384 * video.videoHeight) / video.videoWidth)
-  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
-  return canvas
-}
-
-function write(entry, canvas) {
+// field: "progressThumb" (where you are, shown while in progress) or "thumb" (the chosen frame)
+function write(entry, canvas, field = "progressThumb") {
   pendingSave = pendingSave.then(async () => {
-    if (canvas) entry.thumb = (await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.75))) ?? entry.thumb
+    if (canvas) entry[field] = (await toJpeg(canvas)) ?? entry[field]
     try {
       await db.put(entry)
     } catch (error) {
@@ -47,12 +37,49 @@ function save({ thumbnail = false } = {}) {
   if (!Number.isFinite(duration)) return pendingSave
   const entry = current
   Object.assign(entry, { time: currentTime, duration, updated: Date.now() })
-  const canvas = thumbnail && !entry.isAudio ? drawThumbnail() : null
-  if (canvas) Object.assign(entry, { thumbAt: Date.now(), thumbChecked: true }) // only good frames get here
+  // The frame where you are, drawn right away (the video may be unloaded next, e.g. on close)
+  const canvas = thumbnail && !entry.isAudio ? snapshot(elements.video) : null
+  if (canvas) entry.progressThumbAt = Date.now()
   lastWrite = Date.now()
   return write(entry, canvas)
 }
 
+// ----------------------------- THUMBNAIL POINT -----------------------------
+// Settings > Playback > Thumbnail: 0%, 5% or the frame on screen now, for the open video only
+const pointRow = document.querySelector("#thumb-point-row")
+const pointButtons = pointRow ? [...pointRow.querySelectorAll("[data-point]")] : []
+
+function showPoint() {
+  if (!pointRow) return
+  pointRow.hidden = !current || current.isAudio
+  const point = String(current?.thumbPoint ?? 5)
+  pointButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.point === point)))
+}
+
+async function setThumbPoint(value) {
+  const entry = current
+  if (!entry || entry.isAudio || !utils.hasMedia()) return
+  if (value === "custom") {
+    const canvas = snapshot(elements.video)
+    if (!canvas) return toast("The video isn't ready yet. Try again in a moment.")
+    Object.assign(entry, { thumbPoint: "custom", thumbFor: "custom" })
+    showPoint()
+    await write(entry, canvas, "thumb")
+    return toast(`Thumbnail saved at ${utils.secondsToTime(elements.video.currentTime)}`)
+  }
+  const point = Number(value)
+  entry.thumbPoint = point
+  showPoint()
+  write(entry)
+  // Grab that frame in a hidden video, so playback isn't disturbed
+  const meta = await probe(currentFile, point)
+  if (entry.thumbPoint !== point) return
+  if (!meta?.thumb) return toast("Couldn't grab that frame now. The gallery will try again next time.")
+  Object.assign(entry, { thumb: meta.thumb, thumbFor: point })
+  write(entry)
+}
+
+pointButtons.forEach((b) => b.addEventListener("click", () => setThumbPoint(b.dataset.point)))
 export const library = {
   // Resolves once every queued write has landed
   settled: () => pendingSave,
@@ -79,10 +106,12 @@ export function initLibrary() {
       isAudio: file.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|flac|oga|opus)$/i.test(file.name),
       handle: handle ?? existing?.handle,
       thumb: coverBlob ?? existing?.thumb,
-      thumbChecked: coverBlob ? true : existing?.thumbChecked,
+      thumbFor: coverBlob ? "cover" : existing?.thumbFor,
       updated: Date.now(),
     }
+    currentFile = file
     needsThumbnail = true
+    showPoint()
   })
 
   // Grab a thumbnail once the first (or resumed) frame is ready
@@ -95,7 +124,7 @@ export function initLibrary() {
   elements.video.addEventListener("loadeddata", () => setTimeout(firstThumbnail, 300))
 
   elements.video.addEventListener("timeupdate", () => {
-    if (Date.now() - lastWrite > 5000) save({ thumbnail: Date.now() - (current?.thumbAt ?? 0) > 60000 })
+    if (Date.now() - lastWrite > 5000) save({ thumbnail: Date.now() - (current?.progressThumbAt ?? 0) > 60000 })
   })
   elements.video.addEventListener("pause", () => save({ thumbnail: true }))
   // Finished: keep it in the history as fully watched
@@ -103,6 +132,8 @@ export function initLibrary() {
   bus.addEventListener("media:closing", () => {
     save({ thumbnail: true }) // snapshots synchronously, so the entry can be released right away
     current = null
+    currentFile = null
+    showPoint()
   })
   bus.addEventListener("media:closed", () => {
     pendingSave.then(() => bus.dispatchEvent(new CustomEvent("library:updated")))

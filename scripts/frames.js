@@ -1,52 +1,67 @@
-// Judges whether a video frame makes a good thumbnail. Bad frames: mostly dark, mostly bright,
-// one flat colour (black/white screens, title cards, credits), or dim and washed out (fades).
-const sample = document.createElement("canvas")
-sample.width = 64
-sample.height = 36
-const context = sample.getContext("2d", { willReadFrequently: true })
+// Thumbnail frames. Every video has a chosen point ("thumbPoint" on its record): 0 (the start),
+// 5 (5% in, the default) or "custom" (a frame saved from the player). In-progress videos show the
+// frame from where you stopped ("progressThumb") instead; the chosen one comes back once finished.
+export const DEFAULT_POINT = 5
+export const pointOf = (record) => record?.thumbPoint ?? DEFAULT_POINT
+// The stored frame matches the chosen point (records from older versions don't, so they're redone)
+// (a saved "custom" frame is never redone)
+export const thumbIsCurrent = (record) =>
+  pointOf(record) === "custom" || (record?.thumbFor != null && record.thumbFor === pointOf(record))
 
-// Above this a frame is treated as a bad thumbnail
-export const BAD_FRAME = 0.5
+const WIDTH = 384
 
-// Each rule gives 0 (fine) … 1 (blank); the frame's score is the worst of them
-export function frameBadness(source) {
-  try {
-    context.drawImage(source, 0, 0, sample.width, sample.height)
-    const pixels = context.getImageData(0, 0, sample.width, sample.height).data
-    const total = pixels.length / 4
-    const counts = new Map()
-    let top = 0
-    let dark = 0
-    let bright = 0
-    let sum = 0
-    let sumSquares = 0
-    for (let i = 0; i < pixels.length; i += 4) {
-      const [r, g, b] = [pixels[i], pixels[i + 1], pixels[i + 2]]
-      const luma = 0.299 * r + 0.587 * g + 0.114 * b
-      sum += luma
-      sumSquares += luma * luma
-      if (luma < 50) dark++
-      else if (luma > 205) bright++
-      const colour = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4)
-      const count = (counts.get(colour) ?? 0) + 1
-      counts.set(colour, count)
-      if (count > top) top = count
-    }
-    const mean = sum / total
-    const contrast = Math.sqrt(Math.max(0, sumSquares / total - mean * mean))
-    // Past a limit, each rule climbs from 0.5 (just bad) towards 1
-    const ramp = (amount, range) => (amount > 0 ? 0.5 + Math.min(1, amount / range) * 0.5 : 0)
-    return Math.max(
-      dark / total, // mostly black
-      bright / total, // mostly white
-      ramp(top / total - 0.65, 0.35), // one flat colour (a big plain sky alone is fine)
-      ramp(70 - mean, 70), // dim overall (fade from black, dark overlay)
-      ramp(mean - 195, 60), // washed out (fade to white)
-      ramp(22 - contrast, 22) // very low contrast (mid-fade, haze)
-    )
-  } catch {
-    return 0 // can't read the pixels: don't block the thumbnail
-  }
+// Draws a video frame into a small JPEG (synchronous draw, so the video can be unloaded right after)
+export function snapshot(video) {
+  if (!video.videoWidth || video.readyState < 2) return null
+  const canvas = document.createElement("canvas")
+  canvas.width = WIDTH
+  canvas.height = Math.round((WIDTH * video.videoHeight) / video.videoWidth)
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
+  return canvas
 }
 
-export const isBadFrame = (source) => frameBadness(source) > BAD_FRAME
+export const toJpeg = (canvas) => new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.75))
+
+// Opens a file in a hidden video: its length, plus (when percent is given) the frame that far in.
+// Returns null if the file can't be read.
+export async function probe(file, percent = null) {
+  const video = document.createElement("video")
+  const url = URL.createObjectURL(file)
+  video.muted = true
+  video.preload = "auto"
+  const wait = (event) =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("timeout")), 8000)
+      video.addEventListener(event, () => (clearTimeout(timer), resolve()), { once: true })
+      video.addEventListener("error", () => (clearTimeout(timer), reject(video.error)), { once: true })
+    })
+  const seek = (time) => {
+    const done = wait("seeked")
+    video.currentTime = time
+    return done
+  }
+  try {
+    const loaded = wait("loadedmetadata")
+    video.src = url
+    await loaded
+    // Some WebM files don't store their length: seeking far past the end makes the browser work it out
+    if (!Number.isFinite(video.duration)) await seek(1e9)
+    const length = Number.isFinite(video.duration) ? video.duration : 0
+    if (percent === null || !video.videoWidth || !length) return { duration: length }
+    // A hair past 0 so the browser decodes the very first picture
+    await seek(Math.max(0, Math.min(Math.max((length * percent) / 100, 0.01), length - 0.1)))
+    // "seeked" can fire before the picture is decoded (a black grab): wait for the frame itself
+    await Promise.race([
+      new Promise((r) => video.requestVideoFrameCallback?.(r)),
+      new Promise((r) => setTimeout(r, 300)),
+    ])
+    const canvas = snapshot(video)
+    return { duration: length, thumb: canvas ? await toJpeg(canvas) : null }
+  } catch {
+    return null
+  } finally {
+    video.removeAttribute("src")
+    video.load()
+    URL.revokeObjectURL(url)
+  }
+}
